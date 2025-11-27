@@ -27,10 +27,10 @@ export function HeroSection({
   return (
     <section id="hero" className="w-full">
       <div className="container-hero">
-        <div className="h-[720px] relative w-full my-8">
-          <div className="basis-0 grow min-h-px min-w-px relative rounded-[24px] h-full">
+        <div className="md:h-[720px] h-[500px] relative w-full md:my-8 my-0">
+          <div className="basis-0 grow min-h-px min-w-px relative md:rounded-[24px] rounded-none h-full">
             <div className="flex flex-col justify-center w-full h-full">
-              <div className="box-border flex flex-col items-start justify-center relative w-full h-full p-6">
+              <div className="box-border flex flex-col items-start justify-center relative w-full h-full md:p-6 p-6">
                 {/* Text content aligned to grid with 6/6 split */}
                 <div className="hero-grid w-full h-full items-center">
                   <div className="col-span-6 flex flex-col gap-[10px] justify-center text-white z-[3]">
@@ -66,14 +66,14 @@ export function HeroSection({
                     )}
                   </div>
                 </div>
-                <div className="absolute bg-gradient-to-l from-[rgba(29,27,27,0)] from-[34.809%] to-[#353131] to-[76.924%] inset-0 opacity-80 rounded-[24px] z-[2]" />
-                <div className="absolute inset-0 rounded-[24px] z-[1]">
+                <div className="absolute bg-gradient-to-l from-[rgba(29,27,27,0)] from-[34.809%] to-[#353131] to-[76.924%] inset-0 opacity-80 md:rounded-[24px] rounded-none z-[2]" />
+                <div className="absolute inset-0 md:rounded-[24px] rounded-none z-[1]">
                   <img
                     alt=""
-                    className="absolute inset-0 max-w-none object-cover rounded-[24px] w-full h-full"
+                    className="absolute inset-0 max-w-none object-cover md:rounded-[24px] rounded-none w-full h-full"
                     src={backgroundImage}
                   />
-                  <div className="absolute bg-[rgba(0,0,0,0.2)] inset-0 rounded-[24px]" />
+                  <div className="absolute bg-[rgba(0,0,0,0.2)] inset-0 md:rounded-[24px] rounded-none" />
                 </div>
               </div>
             </div>

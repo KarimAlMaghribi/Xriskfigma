@@ -14,7 +14,7 @@ interface FAQSectionProps {
 
 export function FAQSection({ title, subtitle, faqs, defaultExpanded = 0 }: FAQSectionProps) {
   return (
-    <div id="faq" className="w-full section-spacing px-[0px] py-[40px]">
+    <div id="faq" className="w-full section-spacing">
       <div className="container-grid">
         <div className="grid-12">
           {/* Left Column - Title & Subtitle - 6 cols desktop, full on tablet */}
@@ -28,14 +28,7 @@ export function FAQSection({ title, subtitle, faqs, defaultExpanded = 0 }: FAQSe
             </div>
             {subtitle && (
               <p 
-                className="text-lg-medium text-primary"
-                style={{
-                  fontFamily: "'Roboto', sans-serif",
-                  fontSize: '16px',
-                  lineHeight: '1.3',
-                  color: '#353131',
-                  fontVariationSettings: "'wdth' 100",
-                }}
+                className="font-semibold text-primary text-[18px] leading-[1.5]"
               >
                 {subtitle}
               </p>

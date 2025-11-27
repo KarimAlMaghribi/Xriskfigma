@@ -11,6 +11,9 @@ import { AccountSettings } from "./components/AccountSettings";
 import { RiskDetailPage } from "./components/RiskDetailPage";
 import { TakeRiskPage } from "./components/TakeRiskPage";
 import { TakeRiskModal } from "./components/TakeRiskModal";
+import { ImpressumPage } from "./components/legal/ImpressumPage";
+import { DatenschutzPage } from "./components/legal/DatenschutzPage";
+import { AGBPage } from "./components/legal/AGBPage";
 import { Risk } from "./types/risk";
 import { toast } from "sonner@2.0.3";
 import { currentUser } from "./lib/current-user";
@@ -57,7 +60,10 @@ type Page =
   | "account"
   | "designsystem"
   | "risk-detail"
-  | "take-risk";
+  | "take-risk"
+  | "impressum"
+  | "datenschutz"
+  | "agb";
 
 const theme = createTheme({
   palette: {
@@ -953,12 +959,48 @@ export default function App() {
 
   // Show Landing Page if not logged in
   if (!isLoggedIn) {
+    // Check if we're on a legal page
+    if (currentPage === "impressum") {
+      return (
+        <ThemeProvider theme={theme}>
+          <ImpressumPage 
+            onNavigateBack={() => setCurrentPage("home")}
+            onNavigate={(page) => setCurrentPage(page as Page)}
+          />
+        </ThemeProvider>
+      );
+    }
+    if (currentPage === "datenschutz") {
+      return (
+        <ThemeProvider theme={theme}>
+          <DatenschutzPage 
+            onNavigateBack={() => setCurrentPage("home")}
+            onNavigate={(page) => setCurrentPage(page as Page)}
+          />
+        </ThemeProvider>
+      );
+    }
+    if (currentPage === "agb") {
+      return (
+        <ThemeProvider theme={theme}>
+          <AGBPage 
+            onNavigateBack={() => setCurrentPage("home")}
+            onNavigate={(page) => setCurrentPage(page as Page)}
+          />
+        </ThemeProvider>
+      );
+    }
+
+    // Otherwise show landing page
     return (
       <ThemeProvider theme={theme}>
         {userType === "risikogeber" ? (
           <LandingPage
             onLogin={handleLogin}
             onUserTypeChange={handleUserTypeChange}
+            onNavigate={(page) => {
+              setCurrentPage(page as Page);
+            }}
           />
         ) : (
           <RisktakerLandingPage
@@ -1125,6 +1167,12 @@ export default function App() {
                 onBack={() => setCurrentPage("home")}
               />
             </Box>
+          ) : currentPage === "impressum" ? (
+            <ImpressumPage onNavigateBack={() => setCurrentPage("home")} />
+          ) : currentPage === "datenschutz" ? (
+            <DatenschutzPage onNavigateBack={() => setCurrentPage("home")} />
+          ) : currentPage === "agb" ? (
+            <AGBPage onNavigateBack={() => setCurrentPage("home")} />
           ) : currentPage === "risk-detail" && selectedRisk ? (
             <RiskDetailPage
               risk={selectedRisk}

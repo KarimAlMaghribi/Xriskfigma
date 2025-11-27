@@ -3,7 +3,7 @@ import svgPaths from "./svg-219jop6x79";
 function Container() {
   return (
     <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full" data-name="Container">
-      <p className="font-['Inter:Black',sans-serif] font-black leading-[1.3] not-italic relative shrink-0 text-[#fdfcfc] text-[40px] w-full">
+      <p className="display-large w-full !text-[#e6e5e5]">
         Das Problem mit klassischen Versicherungen
       </p>
     </div>
@@ -184,16 +184,16 @@ function SectionHeadline1() {
   return (
     <div className="content-stretch flex flex-col gap-[16px] items-start relative shrink-0 w-full" data-name="Section headline">
       <Container1 />
-      <div className="font-['Roboto:Regular',sans-serif] font-normal leading-[0] relative shrink-0 text-[#e6e5e5] text-[0px] w-full" style={{ fontVariationSettings: "'wdth' 100" }}>
+      <div className="font-['Roboto:Regular',sans-serif] font-normal leading-[1.3] relative shrink-0 text-[#e6e5e5] text-[16px] w-full" style={{ fontVariationSettings: "'wdth' 100" }}>
         <p className="leading-[1.3] mb-[16px] text-[16px]">Wir verbinden dich mit Menschen, die sich mit deinem Thema auskennen. Du schilderst dein Risiko.</p>
-        <ol className="list-decimal mb-[16px]" start="1">
-          <li className="mb-0 ms-[calc(1.5*1*var(--list-marker-font-size,0))]">
+        <ol className="list-decimal mb-[16px] pl-[20px]" start="1">
+          <li className="mb-0">
             <span className="leading-[1.3] text-[16px]">Die KI Analysiert.</span>
           </li>
-          <li className="mb-0 ms-[calc(1.5*1*var(--list-marker-font-size,0))]">
+          <li className="mb-0">
             <span className="leading-[1.3] text-[16px]">Interessierte bieten an.</span>
           </li>
-          <li className="ms-[calc(1.5*1*var(--list-marker-font-size,0))]">
+          <li>
             <span className="leading-[1.3] text-[16px]">Du wählst.</span>
           </li>
         </ol>
@@ -227,11 +227,11 @@ function SectionHeadline2() {
 
 export default function SectionWasIstXrisk() {
   return (
-    <div className="bg-[#ff671f] w-full py-[80px]" data-name="Section Was ist xrisk">
+    <div className="bg-[#ff671f] w-full py-10 md:py-[80px]" data-name="Section Was ist xrisk">
       <div className="container-grid">
-        <div className="grid-12 items-start gap-y-[40px]">
+        <div className="grid-12 items-start gap-y-[16px] md:!gap-y-[40px]">
           {/* Problem section - 5 columns on desktop, 12 on tablet */}
-          <div className="col-span-5 flex flex-col gap-[40px] relative">
+          <div className="col-span-5 flex flex-col gap-[16px] md:gap-[40px] relative">
             <SectionHeadline />
             <Group />
           </div>

@@ -53,6 +53,7 @@
   --spacing-16: 64px;
   --spacing-20: 80px;
   --spacing-15: 120px;
+  --spacing-30: 120px;
   
   /* Typography tokens */
   --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -118,7 +119,7 @@
   --grid-max-width: 1160px;           /* Max width for content grid */
   --grid-columns: 12;                 /* Number of columns */
   --grid-gap: 40px;                   /* Gap between columns */
-  --hero-max-width: 1320px;           /* Max width for hero section (grid + 160px) */
+  --hero-max-width: 1400px;           /* Max width for hero section - 16:9 format with 788px height */
 }
 
 .dark {
@@ -616,16 +617,6 @@
     .mobile-gap-2 { gap: var(--spacing-2); }
     .mobile-gap-3 { gap: var(--spacing-3); }
     .mobile-gap-4 { gap: var(--spacing-4); }
-    
-    /* Section spacing - reduce from 120px to 64px on mobile */
-    .section-spacing {
-      padding-top: var(--spacing-16);   /* 64px on mobile */
-      padding-bottom: var(--spacing-16); /* 64px on mobile */
-    }
-    
-    .section-spacing-top {
-      margin-top: var(--spacing-16);   /* 64px on mobile */
-    }
   }
   
   /* Responsive text sizes */
@@ -651,7 +642,7 @@
     }
     
     .display-large {
-      font-size: var(--font-size-xl);  /* 40px → 20px */
+      font-size: var(--font-size-3xl);  /* 40px → 32px */
     }
     
     .heading-1 {
@@ -808,13 +799,20 @@
 @layer utilities {
   /* Section spacing utility - responsive */
   .section-spacing {
-    padding-top: var(--spacing-20);   /* 80px on desktop */
-    padding-bottom: var(--spacing-20); /* 80px on desktop */
+    padding-top: 0;   /* No top padding */
+    padding-bottom: var(--spacing-10); /* 40px on mobile */
   }
   
   /* Section top spacing utility - responsive */
   .section-spacing-top {
-    margin-top: var(--spacing-20);   /* 80px on desktop */
+    margin-top: 0;   /* No margin */
+  }
+  
+  /* Desktop override for section spacing */
+  @media (min-width: 801px) {
+    .section-spacing {
+      padding-bottom: var(--spacing-30); /* 120px on desktop */
+    }
   }
   
   /* Container for grid system */
@@ -835,6 +833,15 @@
     margin-right: auto;
     padding-left: 20px;
     padding-right: 20px;
+  }
+  
+  /* Mobile: Hero full width without padding or max-width */
+  @media (max-width: 800px) {
+    .container-hero {
+      max-width: none;
+      padding-left: 0;
+      padding-right: 0;
+    }
   }
   
   /* Full width container (for nav/footer backgrounds) */
@@ -910,10 +917,15 @@
   }
   
   @media (max-width: 800px) {
-    .container-grid,
-    .container-hero {
+    .container-grid {
       padding-left: 20px;
       padding-right: 20px;
+    }
+    
+    /* Hero container: no padding on mobile - already defined above */
+    .container-hero {
+      padding-left: 0;
+      padding-right: 0;
     }
     
     .grid-12,

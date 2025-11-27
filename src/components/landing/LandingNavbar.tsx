@@ -1,8 +1,9 @@
 import imgLogo from "figma:asset/62c15dd4132b6b07480e5845d83ae202650e6625.png";
 import { LandingButton } from "./LandingButton";
 import { LandingNavLink } from "./LandingNavLink";
-import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface LandingNavbarProps {
   activeSection: string;
@@ -19,6 +20,20 @@ export function LandingNavbar({
 }: LandingNavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Verhindere Scrollen wenn Mobile Menu offen ist
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    // Cleanup beim Unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
   const handleNavClick = (sectionId: string) => {
     scrollToSection(sectionId);
     setIsMobileMenuOpen(false);
@@ -27,7 +42,7 @@ export function LandingNavbar({
   return (
     <header className="fixed top-0 z-50 w-full" role="banner">
       <div className="container-grid">
-        <nav className="flex items-center justify-between py-4" aria-label="Hauptnavigation">
+        <nav className="flex items-center justify-between py-4 px-[0px] py-[16px] relative z-50" aria-label="Hauptnavigation">
           {/* Left Side: Logo */}
           <div className="flex gap-6 items-center">
             <img
@@ -40,7 +55,7 @@ export function LandingNavbar({
           {/* Desktop: Right Side Navigation Menu + Login Button */}
           <div className="hidden md:flex gap-6 items-center">
             {/* Navigation Menu */}
-            <nav className="bg-surface-frost backdrop-blur-lg flex gap-2 items-center px-4 py-1 rounded-[100px] shadow-sm p-[4px]" aria-label="Seiten-Navigation">
+            <nav className="bg-surface-frost backdrop-blur-lg flex gap-2 items-center rounded-[100px] shadow-sm p-[4px] px-[8px] py-[0px]" aria-label="Seiten-Navigation">
               <LandingNavLink
                 onClick={() => scrollToSection("testimonial")}
                 isActive={activeSection === "testimonial"}
@@ -83,79 +98,149 @@ export function LandingNavbar({
             )}
           </div>
 
-          {/* Mobile: Burger Menu Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg bg-surface-frost backdrop-blur-lg"
-            aria-label={isMobileMenuOpen ? "Menü schließen" : "Menü öffnen"}
-            aria-expanded={isMobileMenuOpen}
-          >
-            {isMobileMenuOpen ? (
-              <X className="w-6 h-6 text-primary" />
-            ) : (
-              <Menu className="w-6 h-6 text-primary" />
+          {/* Mobile: User Icon + Burger/X Menu Button */}
+          <div className="md:hidden flex gap-2 items-center">
+            {!isLoggedIn && (
+              <button
+                onClick={() => { onLogin(); }}
+                className="p-2 rounded-lg bg-surface-frost backdrop-blur-lg"
+                aria-label="Anmelden"
+              >
+                <User className="w-6 h-6 text-primary" />
+              </button>
             )}
-          </button>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg bg-surface-frost backdrop-blur-lg relative w-[40px] h-[40px]"
+              aria-label={isMobileMenuOpen ? "Menü schließen" : "Menü öffnen"}
+              aria-expanded={isMobileMenuOpen}
+            >
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center"
+                initial={false}
+                animate={{ rotate: isMobileMenuOpen ? 90 : 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AnimatePresence mode="wait">
+                  {isMobileMenuOpen ? (
+                    <motion.div
+                      key="x"
+                      initial={{ opacity: 0, rotate: -90 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: 90 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <X className="w-6 h-6 text-primary" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      initial={{ opacity: 0, rotate: -90 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: 90 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Menu className="w-6 h-6 text-primary" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            </button>
+          </div>
         </nav>
       </div>
 
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-[80px] bg-[rgba(0,0,0,0.5)] backdrop-blur-sm z-40">
-          <div className="bg-surface w-full p-6 shadow-lg">
-            <nav className="flex flex-col gap-4" aria-label="Mobile Navigation">
-              <button
-                onClick={() => handleNavClick("testimonial")}
-                className={`text-left py-3 px-4 rounded-lg transition-colors ${
-                  activeSection === "testimonial" 
-                    ? "bg-brand-alpha-12 text-brand" 
-                    : "text-primary hover:bg-black-alpha-3"
-                }`}
-              >
-                So funktioniert's
-              </button>
-              <button
-                onClick={() => handleNavClick("was-ist-xrisk")}
-                className={`text-left py-3 px-4 rounded-lg transition-colors ${
-                  activeSection === "was-ist-xrisk" 
-                    ? "bg-brand-alpha-12 text-brand" 
-                    : "text-primary hover:bg-black-alpha-3"
-                }`}
-              >
-                Was ist xrisk?
-              </button>
-              <button
-                onClick={() => handleNavClick("prozess")}
-                className={`text-left py-3 px-4 rounded-lg transition-colors ${
-                  activeSection === "prozess" 
-                    ? "bg-brand-alpha-12 text-brand" 
-                    : "text-primary hover:bg-black-alpha-3"
-                }`}
-              >
-                Prozess
-              </button>
-              <button
-                onClick={() => handleNavClick("faq")}
-                className={`text-left py-3 px-4 rounded-lg transition-colors ${
-                  activeSection === "faq" 
-                    ? "bg-brand-alpha-12 text-brand" 
-                    : "text-primary hover:bg-black-alpha-3"
-                }`}
-              >
-                FAQ
-              </button>
-              
-              {!isLoggedIn && (
-                <div className="pt-4 border-t border-border">
-                  <LandingButton onClick={() => { onLogin(); setIsMobileMenuOpen(false); }} className="w-full">
-                    Anmelden
-                  </LandingButton>
+      {/* Mobile Menu Overlay - Fullscreen mit Frost Effect */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            className="md:hidden fixed inset-0 z-40 pt-[80px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Frost Glass Overlay über gesamte Viewport */}
+            <div className="absolute inset-0 backdrop-blur-[47px] bg-[rgba(245,245,245,0.85)]">
+              <div className="container-grid h-full">
+                <div className="flex flex-col justify-center items-center h-full p-6">
+                  <motion.nav 
+                    className="flex flex-col gap-6 w-full max-w-md" 
+                    aria-label="Mobile Navigation"
+                    initial="closed"
+                    animate="open"
+                    variants={{
+                      open: {
+                        transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+                      },
+                      closed: {
+                        transition: { staggerChildren: 0.05, staggerDirection: -1 }
+                      }
+                    }}
+                  >
+                    <motion.button
+                      onClick={() => handleNavClick("testimonial")}
+                      className={`text-center py-4 px-6 rounded-[16px] transition-all text-[20px] ${
+                        activeSection === "testimonial" 
+                          ? "bg-[#ff671f] text-white shadow-lg" 
+                          : "text-primary hover:opacity-70"
+                      }`}
+                      variants={{
+                        open: { opacity: 1, y: 0 },
+                        closed: { opacity: 0, y: 20 }
+                      }}
+                    >
+                      So funktioniert's
+                    </motion.button>
+                    <motion.button
+                      onClick={() => handleNavClick("was-ist-xrisk")}
+                      className={`text-center py-4 px-6 rounded-[16px] transition-all text-[20px] ${
+                        activeSection === "was-ist-xrisk" 
+                          ? "bg-[#ff671f] text-white shadow-lg" 
+                          : "text-primary hover:opacity-70"
+                      }`}
+                      variants={{
+                        open: { opacity: 1, y: 0 },
+                        closed: { opacity: 0, y: 20 }
+                      }}
+                    >
+                      Was ist xrisk?
+                    </motion.button>
+                    <motion.button
+                      onClick={() => handleNavClick("prozess")}
+                      className={`text-center py-4 px-6 rounded-[16px] transition-all text-[20px] ${
+                        activeSection === "prozess" 
+                          ? "bg-[#ff671f] text-white shadow-lg" 
+                          : "text-primary hover:opacity-70"
+                      }`}
+                      variants={{
+                        open: { opacity: 1, y: 0 },
+                        closed: { opacity: 0, y: 20 }
+                      }}
+                    >
+                      Prozess
+                    </motion.button>
+                    <motion.button
+                      onClick={() => handleNavClick("faq")}
+                      className={`text-center py-4 px-6 rounded-[16px] transition-all text-[20px] ${
+                        activeSection === "faq" 
+                          ? "bg-[#ff671f] text-white shadow-lg" 
+                          : "text-primary hover:opacity-70"
+                      }`}
+                      variants={{
+                        open: { opacity: 1, y: 0 },
+                        closed: { opacity: 0, y: 20 }
+                      }}
+                    >
+                      FAQ
+                    </motion.button>
+                  </motion.nav>
                 </div>
-              )}
-            </nav>
-          </div>
-        </div>
-      )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

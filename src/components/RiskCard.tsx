@@ -12,6 +12,7 @@ interface RiskCardProps {
   onFavoriteToggle?: (risk: Risk) => void;
   isFavorite?: boolean;
   variant?: 'marketplace' | 'dashboard';
+  hideActions?: boolean; // Versteckt Favorite-Button und Aktions-Buttons
 }
 
 /**
@@ -139,7 +140,8 @@ export function RiskCard({
   onDelete,
   onFavoriteToggle,
   isFavorite = false,
-  variant = 'marketplace'
+  variant = 'marketplace',
+  hideActions = false,
 }: RiskCardProps) {
   const offers = getOffersByRisk(risk.id);
   const lowestOffer = offers.length > 0 
@@ -189,6 +191,16 @@ export function RiskCard({
 
   // Get user display info
   const getUserDisplay = () => {
+    // When hideActions is true (e.g., landing page), always show real creator name
+    if (hideActions) {
+      const user = getUserById(risk.createdByUserId);
+      return { 
+        name: user ? `${user.firstName} ${user.lastName}` : risk.createdBy,
+        isCurrentUser: false,
+        avatar: user?.avatar || null
+      };
+    }
+    
     if (isOwnRisk && !isDashboard) {
       return { name: 'Von Dir', isCurrentUser: true, avatar: null };
     }
@@ -299,7 +311,7 @@ export function RiskCard({
                 >
                   <DeleteIcon />
                 </div>
-              ) : !isDashboard && (
+              ) : !isDashboard && !hideActions && (
                 <div 
                   className="content-stretch flex items-center justify-center relative rounded-[14px] shrink-0 size-[24px] cursor-pointer hover:bg-[#fff3e0] transition-colors"
                   onClick={(e) => {
@@ -371,37 +383,39 @@ export function RiskCard({
       </div>
 
       {/* Buttons */}
-      <div className="content-stretch flex flex-col gap-[10px] items-start justify-center relative shrink-0 w-full mt-[24px]">
-        {/* Angebot abgeben Button - NUR im Marketplace */}
-        {variant === 'marketplace' && (
-          <div 
-            className={`${
-              buttonConfig.offerButtonDisabled
-                ? 'bg-[#e6e5e5] cursor-not-allowed'
-                : 'bg-[#ff671f] cursor-pointer hover:opacity-90'
-            } box-border content-stretch flex gap-[10px] items-center justify-center px-0 py-[8px] relative rounded-[8px] shrink-0 w-full transition-opacity`}
-            onClick={() => !buttonConfig.offerButtonDisabled && onTakeRisk?.(risk)}
-          >
-            <p className={`font-['Inter:Medium',sans-serif] font-medium leading-[28px] not-italic relative shrink-0 text-[16px] text-nowrap whitespace-pre ${
-              buttonConfig.offerButtonDisabled ? 'text-[#4f4a4a]' : 'text-white'
-            }`}>
-              Angebot abgeben
-            </p>
-          </div>
-        )}
-        
-        {/* Details Button - NUR im Dashboard */}
-        {variant === 'dashboard' && onDetailsClick && (
-          <div 
-            className="box-border content-stretch flex items-center justify-center h-[46px] relative rounded-[8px] shrink-0 cursor-pointer hover:bg-[#f3f2f2] transition-colors w-full border border-[#e6e5e5]"
-            onClick={() => onDetailsClick(risk)}
-          >
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[28px] not-italic relative shrink-0 text-[#353131] text-[16px] text-nowrap whitespace-pre">
-              Details
-            </p>
-          </div>
-        )}
-      </div>
+      {!hideActions && (
+        <div className="content-stretch flex flex-col gap-[10px] items-start justify-center relative shrink-0 w-full mt-[24px]">
+          {/* Angebot abgeben Button - NUR im Marketplace */}
+          {variant === 'marketplace' && (
+            <div 
+              className={`${
+                buttonConfig.offerButtonDisabled
+                  ? 'bg-[#e6e5e5] cursor-not-allowed'
+                  : 'bg-[#ff671f] cursor-pointer hover:opacity-90'
+              } box-border content-stretch flex gap-[10px] items-center justify-center px-0 py-[8px] relative rounded-[8px] shrink-0 w-full transition-opacity`}
+              onClick={() => !buttonConfig.offerButtonDisabled && onTakeRisk?.(risk)}
+            >
+              <p className={`font-['Inter:Medium',sans-serif] font-medium leading-[28px] not-italic relative shrink-0 text-[16px] text-nowrap whitespace-pre ${
+                buttonConfig.offerButtonDisabled ? 'text-[#4f4a4a]' : 'text-white'
+              }`}>
+                Angebot abgeben
+              </p>
+            </div>
+          )}
+          
+          {/* Details Button - NUR im Dashboard */}
+          {variant === 'dashboard' && onDetailsClick && (
+            <div 
+              className="box-border content-stretch flex items-center justify-center h-[46px] relative rounded-[8px] shrink-0 cursor-pointer hover:bg-[#f3f2f2] transition-colors w-full border border-[#e6e5e5]"
+              onClick={() => onDetailsClick(risk)}
+            >
+              <p className="font-['Inter:Medium',sans-serif] font-medium leading-[28px] not-italic relative shrink-0 text-[#353131] text-[16px] text-nowrap whitespace-pre">
+                Details
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Badge */}
       {badge && (

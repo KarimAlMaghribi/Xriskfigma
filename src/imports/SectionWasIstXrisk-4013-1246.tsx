@@ -5,26 +5,7 @@ import imgMartin from "figma:asset/b4ecfaf9c6e73e8dd6c209458e50397edd6b1743.png"
 
 interface SectionWasIstXriskProps {
   variant?: "market" | "bus";
-}
-
-function Container({ variant = "bus" }: SectionWasIstXriskProps) {
-  return (
-    <div className="content-stretch flex flex-col gap-[8px] items-start leading-[0] relative shrink-0 w-full" data-name="Container">
-      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[1.5] relative shrink-0 text-[18px] w-full">
-        <span>{`Was ist `}</span>
-        <span className="text-[#ff671f]">x</span>risk?
-      </p>
-      <p className="font-['Inter:Black',sans-serif] font-black leading-[1.3] relative shrink-0 text-[40px] w-full">
-        <span className="text-[#ff671f]">Zwei Menschen.</span>
-        <span>
-          {" "}
-          <br aria-hidden="true" />
-          {`Ein Risiko. `}
-        </span>
-        <span className="text-[#ff671f]">Eine Lösung.</span>
-      </p>
-    </div>
-  );
+  onVariantChange?: (variant: "market" | "bus") => void;
 }
 
 function SectionHeadline({ variant = "bus" }: SectionWasIstXriskProps) {
@@ -33,48 +14,87 @@ function SectionHeadline({ variant = "bus" }: SectionWasIstXriskProps) {
     : "Wenn T3-Besitzer auf Mechaniker-Experten treffen, entstehen faire Absicherungen – direkt, ohne Umwege.";
     
   return (
-    <div className="content-stretch flex flex-col gap-[16px] items-start not-italic relative shrink-0 text-[#353131] w-full" data-name="Section headline">
-      <Container variant={variant} />
-      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[1.5] relative shrink-0 text-[18px] w-full">{subtitle}</p>
+    <div className="flex flex-col gap-[16px]">
+      <div className="flex flex-col gap-[8px]">
+        <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[1.5] text-[18px] md:text-[18px]">
+          <span>Was ist </span>
+          <span className="text-[#ff671f]">x</span>risk?
+        </p>
+        <p className="display-large text-[#353131]">
+          <span className="text-[#ff671f]">Zwei Menschen.</span>
+          <span> <br />Ein Risiko. </span>
+          <span className="text-[#ff671f]">Eine Lösung.</span>
+        </p>
+      </div>
+      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[1.5] text-[#353131] text-[18px]">{subtitle}</p>
     </div>
   );
 }
 
-function Frame({ variant = "bus" }: SectionWasIstXriskProps) {
-  const name = variant === "market" ? "Lena, Künstlerin" : "Marco, T3-Besitzer";
+function TestimonialCard({ 
+  variant = "bus", 
+  type 
+}: SectionWasIstXriskProps & { type: "giver" | "taker" }) {
+  const isGiver = type === "giver";
+  
+  const image = variant === "market" 
+    ? (isGiver ? imgLena : imgMartin)
+    : (isGiver ? imgImage : imgImage1);
+    
+  const name = variant === "market" 
+    ? (isGiver ? "Lena, Künstlerin" : "Martin, Landwirt")
+    : (isGiver ? "Marco, T3-Besitzer" : "Stefan, T3-Fan");
+    
   const quote = variant === "market"
-    ? `"Ich brauche Sicherheit, damit ich kreativ sein kann. Ohne Sorgen um Wetterausfall."`
-    : `"Seit Jahren träume ich von dieser Tour. Aber mit zwei Kindern im Bus? Wenn der Wagen mitten in den Bergen liegen bleibt, wird's teuer und stressig."`;
-    
-  return (
-    <div className="content-stretch flex flex-col gap-[4px] items-start leading-[1.3] relative shrink-0 w-full">
-      <p className="font-['Roboto:Regular',sans-serif] font-normal relative shrink-0 text-[#ededed] text-[14px] w-full" style={{ fontVariationSettings: "'wdth' 100" }}>
-        {name}
-      </p>
-      <p className="font-['Inter:Black',sans-serif] font-black not-italic relative shrink-0 text-[#e6e5e5] text-[18px] w-full">{quote}</p>
-    </div>
-  );
-}
-
-function TestimonialImage({ variant = "bus" }: SectionWasIstXriskProps) {
-  const image = variant === "market" ? imgLena : imgImage;
+    ? (isGiver 
+        ? `"Ich brauche Sicherheit, damit ich kreativ sein kann. Ohne Sorgen um Wetterausfall."`
+        : `"Als Landwirt kenne ich Wetter. Ich weiß, wie man damit umgeht. Für eine angemessene Prämie übernehme ich dieses Risiko."`)
+    : (isGiver
+        ? `"Seit Jahren träume ich von dieser Tour. Aber mit zwei Kindern im Bus? Wenn der Wagen mitten in den Bergen liegen bleibt, wird's teuer und stressig."`
+        : `"Ich kenne diese Busse in- und auswendig. Ich weiß, was sie können. Und ich weiß, worauf man achten muss."`);
+        
   const description = variant === "market"
-    ? "Lena verkauft ihre Kunstwerke auf Wochenmärkten. Ihr Einkommen hängt vom Wetter ab. Wenn es regnet, bleiben die Besucher weg – und damit ihre Einnahmen. Eine klassische Versicherung? Gibt's dafür nicht. Sie braucht eine andere Lösung."
-    : "Marco hat einen T3 Baujahr 1987. Sein Traum: Alpenüberquerung mit der Familie. Aber der Bus ist alt, die Strecke anspruchsvoll. Eine klassische Versicherung? Deckt sowas nicht ab. Er braucht eine andere Lösung.";
-    
+    ? (isGiver
+        ? "Lena verkauft ihre Kunstwerke auf Wochenmärkten. Ihr Einkommen hängt vom Wetter ab. Wenn es regnet, bleiben die Besucher weg – und damit ihre Einnahmen. Eine klassische Versicherung? Gibt's dafür nicht. Sie braucht eine andere Lösung."
+        : `Martin bewirtschaftet seit 20 Jahren Felder. Wetter ist sein tägliches Geschäft. Er sieht Lenas Anfrage und versteht das Risiko. Er denkt: \"Das kann ich gut einschätzen.\"`)
+    : (isGiver
+        ? "Marco hat einen T3 Baujahr 1987. Sein Traum: Alpenüberquerung mit der Familie. Aber der Bus ist alt, die Strecke anspruchsvoll. Eine klassische Versicherung? Deckt sowas nicht ab. Er braucht eine andere Lösung."
+        : `Stefan schraubt seit 15 Jahren an T3-Bussen rum. Er hat selbst drei Alpentouren hinter sich. Er sieht sich Marcos Bus an – Wartungszustand, Motor, Reifen – und denkt: \"Der schafft das.\"`);
+
   return (
-    <div className="basis-0 grow min-h-px min-w-px relative rounded-[24px] shrink-0 w-full transition-all duration-500 md:h-auto h-[400px]" data-name="TestimonialImage">
-      <div className="flex flex-col justify-end size-full">
-        <div className="box-border content-stretch flex flex-col gap-[8px] items-start justify-end p-[24px] relative size-full">
-          <div className="absolute inset-0 opacity-80 rounded-[24px]" data-name="Abblende" />
-          <div className="absolute inset-0 rounded-[24px]" data-name="Image">
-            <div aria-hidden="true" className="absolute inset-0 pointer-events-none rounded-[24px]">
-              <img alt="" className="absolute max-w-none object-50%-50% object-cover rounded-[24px] size-full transition-all duration-500" src={image} />
-              <div className="absolute bg-gradient-to-b from-[23.077%] from-[rgba(0,0,0,0)] inset-0 rounded-[24px] to-[rgba(0,0,0,0.8)]" />
-            </div>
+    <div className="relative w-full aspect-[3/4] md:aspect-auto md:h-full">
+      {/* Blurred Background Layer - nur Desktop */}
+      <div className="hidden md:block absolute inset-[-120px] overflow-visible pointer-events-none">
+        <img 
+          alt="" 
+          className="absolute inset-0 w-full h-full object-cover blur-[60px] opacity-30" 
+          src={image} 
+        />
+      </div>
+      
+      {/* Main Card with clipping */}
+      <div className="relative w-full h-full rounded-[24px] overflow-hidden transition-all duration-500">
+        {/* Background Image */}
+        <img 
+          alt="" 
+          className="absolute inset-0 w-full h-full object-cover" 
+          src={image} 
+        />
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent from-[23.077%] to-[rgba(0,0,0,0.8)]" />
+        
+        {/* Content */}
+        <div className="absolute inset-0 flex flex-col justify-end p-[24px] gap-[8px]">
+          <div className="flex flex-col gap-[4px]">
+            <p className="font-['Roboto:Regular',sans-serif] font-normal text-[#ededed] text-[14px]" style={{ fontVariationSettings: "'wdth' 100" }}>
+              {name}
+            </p>
+            <p className="font-['Inter:Black',sans-serif] font-black text-[#e6e5e5] text-[18px] leading-[1.3]">
+              {quote}
+            </p>
           </div>
-          <Frame variant={variant} />
-          <p className="font-['Roboto:Regular',sans-serif] font-normal leading-[1.3] min-w-full relative shrink-0 text-[#e6e5e5] text-[16px] w-[min-content] transition-all duration-500" style={{ fontVariationSettings: "'wdth' 100" }}>
+          <p className="font-['Roboto:Regular',sans-serif] font-normal leading-[1.3] text-[#e6e5e5] text-[16px] transition-all duration-500" style={{ fontVariationSettings: "'wdth' 100" }}>
             {description}
           </p>
         </div>
@@ -83,73 +103,42 @@ function TestimonialImage({ variant = "bus" }: SectionWasIstXriskProps) {
   );
 }
 
-function LeftRow({ variant = "bus" }: SectionWasIstXriskProps) {
+export default function SectionWasIstXrisk({ variant = "bus", onVariantChange }: SectionWasIstXriskProps) {
   return (
-    <div className="content-stretch flex flex-col gap-[40px] h-[900px] md:h-[900px] h-auto items-start justify-center relative rounded-bl-[24px] rounded-br-[24px]" data-name="Left Row">
-      <SectionHeadline variant={variant} />
-      <TestimonialImage variant={variant} />
-    </div>
-  );
-}
-
-function Frame1({ variant = "bus" }: SectionWasIstXriskProps) {
-  const name = variant === "market" ? "Martin, Landwirt" : "Stefan, T3-Fan";
-  const quote = variant === "market"
-    ? `"Als Landwirt kenne ich Wetter. Ich weiß, wie man damit umgeht. Für eine angemessene Prämie übernehme ich dieses Risiko."`
-    : `"Ich kenne diese Busse in- und auswendig. Ich weiß, was sie können. Und ich weiß, worauf man achten muss."`;
-    
-  return (
-    <div className="content-stretch flex flex-col gap-[4px] items-start leading-[1.3] relative shrink-0 w-full">
-      <p className="font-['Roboto:Regular',sans-serif] font-normal relative shrink-0 text-[#ededed] text-[14px] w-full" style={{ fontVariationSettings: "'wdth' 100" }}>
-        {name}
-      </p>
-      <p className="font-['Inter:Black',sans-serif] font-black not-italic relative shrink-0 text-[#e6e5e5] text-[18px] w-full">{quote}</p>
-    </div>
-  );
-}
-
-function TestimonialImage1({ variant = "bus" }: SectionWasIstXriskProps) {
-  const image = variant === "market" ? imgMartin : imgImage1;
-  const description = variant === "market"
-    ? `Martin bewirtschaftet seit 20 Jahren Felder. Wetter ist sein tägliches Geschäft. Er sieht Lenas Anfrage und versteht das Risiko. Er denkt: \"Das kann ich gut einschätzen.\"`
-    : `Stefan schraubt seit 15 Jahren an T3-Bussen rum. Er hat selbst drei Alpentouren hinter sich. Er sieht sich Marcos Bus an – Wartungszustand, Motor, Reifen – und denkt: \"Der schafft das.\"`;
-    
-  return (
-    <div className="box-border content-stretch flex flex-col gap-[8px] h-full items-start justify-end p-[24px] relative rounded-[24px] shrink-0 w-full transition-all duration-500" data-name="TestimonialImage">
-      <div className="absolute inset-0 opacity-80 rounded-[24px]" data-name="Abblende" />
-      <div className="absolute inset-0 rounded-[24px]" data-name="Image">
-        <div aria-hidden="true" className="absolute inset-0 pointer-events-none rounded-[24px]">
-          <img alt="" className="absolute max-w-none object-50%-50% object-cover rounded-[24px] size-full transition-all duration-500" src={image} />
-          <div className="absolute bg-gradient-to-b from-[23.077%] from-[rgba(0,0,0,0)] inset-0 rounded-[24px] to-[rgba(0,0,0,0.8)]" />
-        </div>
-      </div>
-      <Frame1 variant={variant} />
-      <p className="font-['Roboto:Regular',sans-serif] font-normal leading-[1.3] min-w-full relative shrink-0 text-[#e6e5e5] text-[16px] w-[min-content] transition-all duration-500" style={{ fontVariationSettings: "'wdth' 100" }}>{description}</p>
-    </div>
-  );
-}
-
-function RightRow({ variant = "bus" }: SectionWasIstXriskProps) {
-  return (
-    <div className="content-stretch flex gap-[10px] h-[900px] md:h-[900px] h-[400px] items-center relative" data-name="Right Row">
-      <TestimonialImage1 variant={variant} />
-    </div>
-  );
-}
-
-export default function SectionWasIstXrisk({ variant = "bus" }: SectionWasIstXriskProps) {
-  return (
-    <div className="w-full" data-name="Section Was ist xrisk">
+    <div className="w-full relative">
       <div className="container-grid">
-        <div className="grid-12 py-[80px]">
-          {/* Left side - 6 columns */}
-          <div className="col-span-6">
-            <LeftRow variant={variant} />
+        <div className="grid-12 p-[0px] relative">
+          
+          {/* MOBILE LAYOUT - Stack vertically, full width */}
+          <div className="md:hidden col-span-12 flex flex-col gap-[16px]">
+            <SectionHeadline variant={variant} />
+            <TestimonialCard variant={variant} type="giver" />
+            <TestimonialCard variant={variant} type="taker" />
           </div>
           
-          {/* Right side - 6 columns */}
-          <div className="col-span-6">
-            <RightRow variant={variant} />
+          {/* DESKTOP LAYOUT - Side by side, 800px height */}
+          <div className="hidden md:contents">
+            {/* Headline - 6 columns on desktop */}
+            <div className="col-span-6">
+              <SectionHeadline variant={variant} />
+            </div>
+            
+            {/* Spacer for layout */}
+            <div className="col-span-6"></div>
+            
+            {/* Left Column - Giver Card */}
+            <div className="col-span-6">
+              <div className="h-[600px] flex items-center">
+                <TestimonialCard variant={variant} type="giver" />
+              </div>
+            </div>
+            
+            {/* Right Column - Taker Card */}
+            <div className="col-span-6">
+              <div className="h-[600px] flex items-center">
+                <TestimonialCard variant={variant} type="taker" />
+              </div>
+            </div>
           </div>
         </div>
       </div>

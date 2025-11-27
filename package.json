@@ -36,6 +36,7 @@
           "clsx": "*",
           "cmdk": "^1.1.1",
           "embla-carousel-react": "^8.6.0",
+          "framer-motion": "*",
           "i18next": "*",
           "i18next-browser-languagedetector": "*",
           "input-otp": "^1.4.2",
