@@ -1,11 +1,5 @@
-import { useState } from "react";
 import { Box, Typography } from "@mui/material";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
+import { Shield, CheckCircle2, Scale, Sparkles, Rocket } from "lucide-react";
 
 export type RiskToleranceLevel = 1 | 2 | 3 | 4 | 5 | null;
 
@@ -14,143 +8,169 @@ interface RiskToleranceSelectorProps {
   onChange: (level: RiskToleranceLevel) => void;
 }
 
-const riskToleranceLabels = {
-  1: "Vorsichtig",
-  2: "Zurückhaltend",
-  3: "Ausgewogen",
-  4: "Mutig",
-  5: "Erfahren",
-} as const;
-
-const riskToleranceDescriptions = {
-  1: "Sie bevorzugen maximale Sicherheit und möchten nur Risiken mit sehr geringer Eintrittswahrscheinlichkeit übernehmen. Perfekt für den konservativen Start!",
-  2: "Sie fühlen sich wohl mit überschaubaren Risiken, die gut kalkulierbar sind. Ideal für einen ausgewogenen Einstieg in die Community.",
-  3: "Sie sind offen für eine ausgewogene Mischung aus Sicherheit und Chance. Sie schätzen faire Risiko-Prämien-Verhältnisse.",
-  4: "Sie sind bereit, auch anspruchsvollere Risiken zu übernehmen und schätzen attraktive Prämien. Erfahrung zahlt sich aus!",
-  5: "Sie sind ein erfahrener Risikomanager und trauen sich auch komplexe Absicherungen zu. Höchste Prämien für Ihre Expertise!",
-} as const;
+const riskToleranceOptions = [
+  {
+    level: 1,
+    label: "Auf Nummer sicher",
+    shortLabel: "Sicher",
+    subLabel: "Wenig verdienen",
+    description: "Planbar und verlässlich – dafür etwas weniger Ertrag",
+    icon: Shield,
+    color: "#4CAF50",
+  },
+  {
+    level: 2,
+    label: "Bedacht",
+    shortLabel: "Bedacht",
+    subLabel: "Solide verdienen",
+    description: "Gut informiert entscheiden – mit solidem Ergebnis",
+    icon: CheckCircle2,
+    color: "#8BC34A",
+  },
+  {
+    level: 3,
+    label: "Flexibel",
+    shortLabel: "Flexibel",
+    subLabel: "Gut verdienen",
+    description: "Balance zwischen Absicherung und Chance – fair vergütet",
+    icon: Scale,
+    color: "#FF9800",
+  },
+  {
+    level: 4,
+    label: "Entdeckerfreude",
+    shortLabel: "Entdecker",
+    subLabel: "Mehr verdienen",
+    description: "Neues ausprobieren – wird entsprechend belohnt",
+    icon: Sparkles,
+    color: "#FF671F",
+  },
+  {
+    level: 5,
+    label: "Voller Tatendrang",
+    shortLabel: "Tatendrang",
+    subLabel: "Viel verdienen",
+    description: "Vorangehen und anpacken – bringt am meisten",
+    icon: Rocket,
+    color: "#F44336",
+  },
+] as const;
 
 export function RiskToleranceSelector({ value, onChange }: RiskToleranceSelectorProps) {
-  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+  const selectedOption = riskToleranceOptions.find((o) => o.level === value);
 
   return (
-    <TooltipProvider delayDuration={200}>
-      <Box
+    <Box
+      sx={{
+        backgroundColor: "#fdfcfc",
+        border: "1px solid #e6e5e5",
+        borderRadius: "12px",
+        p: 2,
+      }}
+    >
+      {/* Question */}
+      <Typography
         sx={{
-          backgroundColor: "#fdfcfc",
-          border: "2px solid #e6e5e5",
-          borderRadius: "16px",
-          p: 3,
-          transition: "all 0.2s ease",
+          fontFamily: "'Inter', sans-serif",
+          fontSize: "14px",
+          fontWeight: 600,
+          color: "#353131",
+          mb: 2,
         }}
       >
-        {/* Question */}
-        <Typography
-          sx={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: "16px",
-            fontWeight: 600,
-            color: "#353131",
-            mb: 2,
-          }}
-        >
-          Wie risikobereit sind Sie?
-        </Typography>
+        Sicherheit oder Chancen – was ist dir wichtiger?
+      </Typography>
 
-        {/* Risk Bars */}
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-          {[1, 2, 3, 4, 5].map((bar) => {
-            const isActive = value !== null && bar <= value;
-            const isHovered = hoveredBar !== null && bar <= hoveredBar;
-            
-            return (
-              <Tooltip key={bar}>
-                <TooltipTrigger asChild>
-                  <Box
-                    onClick={() => onChange(bar as RiskToleranceLevel)}
-                    onMouseEnter={() => setHoveredBar(bar)}
-                    onMouseLeave={() => setHoveredBar(null)}
-                    sx={{
-                      flex: 1,
-                      height: "16px",
-                      borderRadius: "70px",
-                      backgroundColor: isActive 
-                        ? "#ff671f" 
-                        : isHovered 
-                        ? "#ffb088" 
-                        : "#d9d9d9",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        transform: "scaleY(1.5)",
-                      },
-                    }}
-                  />
-                </TooltipTrigger>
-                <TooltipContent 
-                  side="top"
-                  className="max-w-xs"
-                  style={{
-                    backgroundColor: "#fdfcfc",
-                    border: "1px solid #e6e5e5",
-                    borderRadius: "12px",
-                    padding: "12px 16px",
+      {/* Segmented Control Container */}
+      <Box
+        sx={{
+          position: "relative",
+          backgroundColor: "#f5f5f5",
+          borderRadius: "10px",
+          p: 0.5,
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: 0.5,
+        }}
+      >
+        {riskToleranceOptions.map((option) => {
+          const Icon = option.icon;
+          const isSelected = value === option.level;
+
+          return (
+            <Box
+              key={option.level}
+              onClick={() => onChange(option.level as RiskToleranceLevel)}
+              title={option.description}
+              sx={{
+                position: "relative",
+                flex: { xs: "none", sm: "1 1 0" },
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 1,
+                py: 1,
+                px: 1.5,
+                borderRadius: "8px",
+                backgroundColor: isSelected ? "#ffffff" : "transparent",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                boxShadow: isSelected
+                  ? "0 1px 4px rgba(0, 0, 0, 0.06)"
+                  : "none",
+                "&:hover": {
+                  backgroundColor: isSelected ? "#ffffff" : "rgba(255, 255, 255, 0.5)",
+                },
+              }}
+            >
+              {/* Icon */}
+              <Icon
+                size={16}
+                strokeWidth={2.5}
+                style={{
+                  color: isSelected ? option.color : "#9e9e9e",
+                  transition: "all 0.2s ease",
+                  flexShrink: 0,
+                }}
+              />
+
+              {/* Labels Container */}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                {/* Main Label */}
+                <Typography
+                  sx={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: "13px",
+                    fontWeight: isSelected ? 600 : 500,
+                    color: isSelected ? option.color : "#757575",
+                    transition: "all 0.2s ease",
+                    lineHeight: 1.2,
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontFamily: "'Inter', sans-serif",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        color: "#ff671f",
-                        mb: 0.5,
-                      }}
-                    >
-                      {riskToleranceLabels[bar as keyof typeof riskToleranceLabels]}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontFamily: "'Inter', sans-serif",
-                        fontSize: "13px",
-                        color: "#4f4a4a",
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {riskToleranceDescriptions[bar as keyof typeof riskToleranceDescriptions]}
-                    </Typography>
-                  </Box>
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </Box>
+                  {option.shortLabel}
+                </Typography>
 
-      {/* Selected Info */}
-      {value !== null && (
-        <Box
-          sx={{
-            mt: 2,
-            pt: 2,
-            borderTop: "1px solid #e6e5e5",
-          }}
-        >
-          <Typography
-            sx={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: "13px",
-              color: "#4f4a4a",
-              lineHeight: 1.5,
-            }}
-          >
-            <Box component="span" sx={{ fontWeight: 600, color: "#ff671f" }}>
-              Ihre Auswahl:
-            </Box>{" "}
-            {riskToleranceLabels[value]} Risikobereitschaft
-          </Typography>
-        </Box>
-      )}
+                {/* Sub Label */}
+                <Typography
+                  sx={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: "10px",
+                    fontWeight: 400,
+                    color: isSelected ? option.color : "#9e9e9e",
+                    transition: "all 0.2s ease",
+                    lineHeight: 1.2,
+                    whiteSpace: "nowrap",
+                    opacity: 0.8,
+                  }}
+                >
+                  {option.subLabel}
+                </Typography>
+              </Box>
+            </Box>
+          );
+        })}
+      </Box>
     </Box>
-    </TooltipProvider>
   );
 }

@@ -72,6 +72,7 @@ export function HeroSection({
                     alt=""
                     className="absolute inset-0 max-w-none object-cover md:rounded-[24px] rounded-none w-full h-full"
                     src={backgroundImage}
+                    style={{ filter: 'blur(120px)' }}
                   />
                   <div className="absolute bg-[rgba(0,0,0,0.2)] inset-0 md:rounded-[24px] rounded-none" />
                 </div>

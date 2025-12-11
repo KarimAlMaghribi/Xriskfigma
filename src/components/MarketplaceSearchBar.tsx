@@ -109,12 +109,12 @@ export function MarketplaceSearchBar({
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 2,
-            px: 3,
-            py: 2.5,
+            gap: { xs: 1, sm: 2 },
+            px: { xs: 2, sm: 3 },
+            py: { xs: 1.5, sm: 2.5 },
             backgroundColor: "#fdfcfc",
             border: "2px solid #e6e5e5",
-            borderRadius: "16px",
+            borderRadius: { xs: "12px", sm: "16px" },
             transition: "all 0.2s ease",
             "&:hover": {
               borderColor: "#ff671f",
@@ -125,7 +125,7 @@ export function MarketplaceSearchBar({
             },
           }}
         >
-          <SearchIcon sx={{ fontSize: 28, color: "#ff671f" }} />
+          <SearchIcon sx={{ fontSize: { xs: 20, sm: 28 }, color: "#ff671f" }} />
           
           <InputBase
             ref={inputRef}
@@ -147,7 +147,7 @@ export function MarketplaceSearchBar({
             sx={{
               flex: 1,
               fontFamily: "'Inter', sans-serif",
-              fontSize: "18px",
+              fontSize: { xs: "15px", sm: "18px" },
               color: "#353131",
               "& input::placeholder": {
                 color: "#9E9E9E",
@@ -162,10 +162,10 @@ export function MarketplaceSearchBar({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              px: 3,
-              py: 1.5,
+              px: { xs: 2, sm: 3 },
+              py: { xs: 1, sm: 1.5 },
               backgroundColor: "#ff671f",
-              borderRadius: "8px",
+              borderRadius: { xs: "6px", sm: "8px" },
               cursor: "pointer",
               transition: "all 0.2s ease",
               "&:hover": {
@@ -180,14 +180,22 @@ export function MarketplaceSearchBar({
             <Typography
               sx={{
                 fontFamily: "'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: { xs: "14px", sm: "16px" },
                 fontWeight: 600,
                 color: "white",
                 whiteSpace: "nowrap",
+                display: { xs: "none", sm: "block" },
               }}
             >
               Suchen
             </Typography>
+            <SearchIcon 
+              sx={{ 
+                fontSize: 18, 
+                color: "white",
+                display: { xs: "block", sm: "none" },
+              }} 
+            />
           </Box>
         </Paper>
 
@@ -203,23 +211,23 @@ export function MarketplaceSearchBar({
                 right: 0,
                 zIndex: 1000,
                 backgroundColor: "#fdfcfc",
-                borderRadius: "16px",
+                borderRadius: { xs: "12px", sm: "16px" },
                 border: "1px solid #e6e5e5",
-                maxHeight: "400px",
+                maxHeight: { xs: "300px", sm: "400px" },
                 overflow: "auto",
               }}
             >
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
               <Typography
                 sx={{
                   fontFamily: "'Inter', sans-serif",
-                  fontSize: "12px",
+                  fontSize: { xs: "11px", sm: "12px" },
                   fontWeight: 600,
                   color: "#4f4a4a",
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                   mb: 1,
-                  px: 2,
+                  px: { xs: 1.5, sm: 2 },
                 }}
               >
                 Vorschläge
@@ -231,9 +239,9 @@ export function MarketplaceSearchBar({
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 2,
-                    p: 2,
-                    borderRadius: "12px",
+                    gap: { xs: 1.5, sm: 2 },
+                    p: { xs: 1.5, sm: 2 },
+                    borderRadius: { xs: "10px", sm: "12px" },
                     cursor: "pointer",
                     transition: "all 0.2s ease",
                     "&:hover": {
@@ -243,12 +251,12 @@ export function MarketplaceSearchBar({
                 >
                   <Box
                     onClick={() => handleSuggestionClick(risk)}
-                    sx={{ flex: 1 }}
+                    sx={{ flex: 1, minWidth: 0 }}
                   >
                     <Typography
                       sx={{
                         fontFamily: "'Inter', sans-serif",
-                        fontSize: "14px",
+                        fontSize: { xs: "13px", sm: "14px" },
                         fontWeight: 600,
                         color: "#353131",
                         mb: 0.5,
@@ -261,15 +269,26 @@ export function MarketplaceSearchBar({
                     <Typography
                       sx={{
                         fontFamily: "'Inter', sans-serif",
-                        fontSize: "12px",
+                        fontSize: { xs: "11px", sm: "12px" },
                         color: "#4f4a4a",
                         display: "flex",
                         alignItems: "center",
-                        gap: 1,
+                        gap: 0.5,
                         mb: 0.5,
+                        flexWrap: { xs: "wrap", sm: "nowrap" },
                       }}
                     >
-                      {categoryLabels[risk.category]} • {risk.duration} {risk.duration === 1 ? "Tag" : "Tage"} • {risk.coverageAmount.toLocaleString("de-DE")} €
+                      <Box component="span" sx={{ whiteSpace: "nowrap" }}>
+                        {categoryLabels[risk.category]}
+                      </Box>
+                      <Box component="span">•</Box>
+                      <Box component="span" sx={{ whiteSpace: "nowrap" }}>
+                        {risk.duration} {risk.duration === 1 ? "Tag" : "Tage"}
+                      </Box>
+                      <Box component="span">•</Box>
+                      <Box component="span" sx={{ whiteSpace: "nowrap" }}>
+                        {risk.coverageAmount.toLocaleString("de-DE")} €
+                      </Box>
                     </Typography>
                     
                     {/* Premium Range */}
@@ -277,12 +296,12 @@ export function MarketplaceSearchBar({
                       <Typography
                         sx={{
                           fontFamily: "'Inter', sans-serif",
-                          fontSize: "12px",
+                          fontSize: { xs: "11px", sm: "12px" },
                           color: "#ff671f",
                           fontWeight: 600,
                         }}
                       >
-                        Prämie: {risk.recommendedPriceRange.min.toLocaleString("de-DE")} € - {risk.recommendedPriceRange.max.toLocaleString("de-DE")} €
+                        {risk.recommendedPriceRange.min.toLocaleString("de-DE")} € - {risk.recommendedPriceRange.max.toLocaleString("de-DE")} €
                       </Typography>
                     )}
                   </Box>
@@ -297,10 +316,11 @@ export function MarketplaceSearchBar({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      width: 36,
-                      height: 36,
+                      width: { xs: 32, sm: 36 },
+                      height: { xs: 32, sm: 36 },
                       borderRadius: "50%",
                       transition: "all 0.2s ease",
+                      flexShrink: 0,
                       "&:hover": {
                         backgroundColor: "#fff3e0",
                       },

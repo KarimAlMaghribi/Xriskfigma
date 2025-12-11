@@ -1,3 +1,4 @@
+import { Star } from "lucide-react";
 import { useState } from "react";
 import {
   Box,
@@ -163,24 +164,10 @@ export function AccountSettings({ onBack }: AccountSettingsProps) {
     <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: 3 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography
-          sx={{
-            fontFamily: "'Roboto', sans-serif",
-            fontSize: "32px",
-            fontWeight: 700,
-            color: "#353131",
-            mb: 1,
-          }}
-        >
-          Kontoeinstellungen
+        <Typography className="heading-1 text-primary" sx={{ mb: 1 }}>
+          Einstellungen
         </Typography>
-        <Typography
-          sx={{
-            fontFamily: "'Roboto', sans-serif",
-            fontSize: "16px",
-            color: "#4F4A4A",
-          }}
-        >
+        <Typography className="body-base text-secondary">
           Verwalten Sie Ihre persönlichen Daten und Verifizierungen
         </Typography>
       </Box>
@@ -214,10 +201,9 @@ export function AccountSettings({ onBack }: AccountSettingsProps) {
               <Button
                 startIcon={<CloudUploadIcon />}
                 size="small"
+                className="body-sm"
                 sx={{
                   textTransform: "none",
-                  fontFamily: "'Roboto', sans-serif",
-                  fontSize: "14px",
                   color: "#ff671f",
                 }}
               >
@@ -230,24 +216,10 @@ export function AccountSettings({ onBack }: AccountSettingsProps) {
             {/* Profile Completeness */}
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                <Typography
-                  sx={{
-                    fontFamily: "'Roboto', sans-serif",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    color: "#353131",
-                  }}
-                >
+                <Typography className="body-sm-medium text-primary">
                   Profilvollständigkeit
                 </Typography>
-                <Typography
-                  sx={{
-                    fontFamily: "'Roboto', sans-serif",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    color: "#ff671f",
-                  }}
-                >
+                <Typography className="body-sm-medium" sx={{ color: "#ff671f" }}>
                   {profileCompleteness}%
                 </Typography>
               </Box>
@@ -322,30 +294,34 @@ export function AccountSettings({ onBack }: AccountSettingsProps) {
               </Typography>
               <Box
                 sx={{
-                  bgcolor: "#f3f2f2",
-                  borderRadius: 2,
-                  p: 2,
-                  textAlign: "center",
+                  backgroundColor: "#fdfcfc",
+                  border: "2px solid #e6e5e5",
+                  borderRadius: "12px",
+                  p: 3,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
                 }}
               >
+                <Box sx={{ display: "flex", gap: "8px" }}>
+                  {Array.from({ length: user.stars }).map((_, i) => (
+                    <Star
+                      key={i}
+                      size={24}
+                      fill="#ff671f"
+                      strokeWidth={0}
+                      style={{ color: "#ff671f" }}
+                    />
+                  ))}
+                </Box>
                 <Typography
                   sx={{
-                    fontFamily: "'Roboto', sans-serif",
-                    fontSize: "36px",
-                    fontWeight: 700,
-                    color: "#ff671f",
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: "14px",
+                    color: "#4f4a4a",
                   }}
                 >
-                  {user.score}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontFamily: "'Roboto', sans-serif",
-                    fontSize: "12px",
-                    color: "#4F4A4A",
-                  }}
-                >
-                  von 100 Punkten
+                  {user.stars} {user.stars === 1 ? "Stern" : "Sterne"}
                 </Typography>
               </Box>
             </Box>

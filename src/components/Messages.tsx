@@ -1,45 +1,43 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
-  TextField,
-  InputAdornment,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemAvatar,
-  ListItemText,
-  Avatar,
-  Badge,
-  Chip,
   Typography,
-  IconButton,
-  Divider,
+  InputBase,
   Paper,
+  Avatar,
+  IconButton,
   Button,
+  useMediaQuery,
+  useTheme,
+  Fade,
 } from "@mui/material";
-import { VerifiedBadge } from "./VerifiedBadge";
 import {
   Search as SearchIcon,
-  FilterList as FilterIcon,
   Send as SendIcon,
-  AttachFile as AttachFileIcon,
   Info as InfoIcon,
-  AccountCircle as AccountCircleIcon,
+  ArrowBack as ArrowBackIcon,
+  MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 import { mockConversations, mockMessages } from "../lib/messages-mock-data";
 import { Conversation, Message } from "../types/message";
 import { currentUser } from "../lib/current-user";
-import { OfferMessageCard } from "./OfferMessageCard";
 import { users } from "../lib/user-mock-data";
+import { VerifiedBadge } from "./VerifiedBadge";
 
-export function Messages() {
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(
-    mockConversations[0]
-  );
+interface MessagesProps {
+  onOpenRiskDetail?: (riskId: string) => void;
+}
+
+export function Messages({ onOpenRiskDetail }: MessagesProps) {
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [conversations] = useState<Conversation[]>(mockConversations);
   const [messages, setMessages] = useState<Message[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [newMessage, setNewMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   useEffect(() => {
     if (selectedConversation) {
@@ -47,37 +45,9 @@ export function Messages() {
     }
   }, [selectedConversation]);
 
-  const getRiskLevelColor = (level: number): string => {
-    switch (level) {
-      case 1:
-        return "#4caf50"; // Green
-      case 2:
-        return "#8bc34a"; // Light Green
-      case 3:
-        return "#ffc107"; // Yellow/Orange
-      case 4:
-        return "#ff9800"; // Orange
-      case 5:
-        return "#f44336"; // Red
-      default:
-        return "#9e9e9e";
-    }
-  };
-
-  const getStatusLabel = (status: string): string => {
-    switch (status) {
-      case "active":
-        return "Aktiv";
-      case "in-negotiation":
-        return "In Verhandlung";
-      case "transferred":
-        return "Übertragen";
-      case "completed":
-        return "Abgeschlossen";
-      default:
-        return status;
-    }
-  };
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const formatDate = (date: Date): string => {
     const now = new Date();
@@ -86,17 +56,11 @@ export function Messages() {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 60) return `vor ${minutes} Min`;
-    if (hours < 24) return `vor ${hours} Std`;
-    if (days < 7) return `vor ${days} Tag${days > 1 ? "en" : ""}`;
-    return date.toLocaleDateString("de-DE");
-  };
-
-  const formatCurrency = (amount: number, currency: string = "EUR"): string => {
-    return new Intl.NumberFormat("de-DE", {
-      style: "currency",
-      currency: currency,
-    }).format(amount);
+    if (minutes < 1) return "Jetzt";
+    if (minutes < 60) return `${minutes} Min`;
+    if (hours < 24) return `${hours} Std`;
+    if (days < 7) return `${days}T`;
+    return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
   };
 
   const handleSendMessage = () => {
@@ -118,656 +82,552 @@ export function Messages() {
     setNewMessage("");
   };
 
-  const handleAcceptOffer = (offerId: string) => {
-    setMessages(messages.map(msg => {
-      if (msg.offerData && msg.offerData.offerId === offerId) {
-        return {
-          ...msg,
-          offerData: {
-            ...msg.offerData,
-            status: 'accepted'
-          }
-        };
-      }
-      return msg;
-    }));
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
-  const handleDeclineOffer = (offerId: string) => {
-    setMessages(messages.map(msg => {
-      if (msg.offerData && msg.offerData.offerId === offerId) {
-        return {
-          ...msg,
-          offerData: {
-            ...msg.offerData,
-            status: 'declined'
-          }
-        };
-      }
-      return msg;
-    }));
+  const handleBackToList = () => {
+    setSelectedConversation(null);
   };
 
   const filteredConversations = conversations.filter((conv) =>
-    conv.partnerName.toLowerCase().includes(searchQuery.toLowerCase())
+    conv.partnerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.riskTitle.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Mobile: Show either list or chat
+  const showList = !isMobile || !selectedConversation;
+  const showChat = !isMobile || selectedConversation;
+
   return (
-    <Box sx={{ display: "flex", height: "100%", bgcolor: "#fdfcfc" }}>
-      {/* Left Sidebar - Conversations List */}
+    <Box sx={{ display: "flex", height: "100%", bgcolor: "#fdfcfc", position: "relative" }}>
+      {/* Conversations List */}
       <Box
         sx={{
-          width: 380,
-          borderRight: "1px solid rgba(230, 229, 229, 0.4)",
-          display: "flex",
+          width: { xs: "100%", md: 360 },
+          borderRight: { xs: "none", md: "1px solid #e6e5e5" },
+          display: showList ? "flex" : "none",
           flexDirection: "column",
           bgcolor: "white",
+          position: { xs: "absolute", md: "relative" },
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: { xs: selectedConversation ? 0 : 2, md: 1 },
         }}
       >
-        {/* Search and Filter */}
-        <Box sx={{ p: 3 }}>
-          <TextField
-            fullWidth
-            placeholder="Konversationen durchsuchen..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "#4f4a4a" }} />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton size="small">
-                    <FilterIcon sx={{ color: "#4f4a4a" }} />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
+        {/* Search Header */}
+        <Box sx={{ p: { xs: 2, md: 2 }, pt: { xs: isMobile ? 8 : 2, md: 2 } }}>
+          <h2 className="heading-3" style={{ marginBottom: "16px" }}>
+            Nachrichten
+          </h2>
+          <Paper
+            elevation={0}
             sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 3,
-                bgcolor: "#f5f5f5",
-                "& fieldset": {
-                  borderColor: "transparent",
-                },
-                "&:hover fieldset": {
-                  borderColor: "rgba(255, 103, 31, 0.3)",
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: "#ff671f",
-                },
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              px: 2,
+              py: { xs: 1.5, md: 1.25 },
+              bgcolor: "#f5f5f5",
+              borderRadius: "12px",
+              border: "1px solid transparent",
+              transition: "all 0.2s ease",
+              "&:focus-within": {
+                borderColor: "#ff671f",
+                bgcolor: "white",
               },
             }}
-          />
+          >
+            <SearchIcon sx={{ fontSize: { xs: 22, md: 20 }, color: "#9e9e9e" }} />
+            <InputBase
+              placeholder="Suchen..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{
+                flex: 1,
+                fontFamily: "'Inter', sans-serif",
+                fontSize: { xs: "16px", md: "14px" },
+                "& input::placeholder": {
+                  color: "#9e9e9e",
+                  opacity: 1,
+                },
+              }}
+            />
+          </Paper>
         </Box>
 
         {/* Conversations List */}
-        <List sx={{ flexGrow: 1, overflow: "auto", px: 2 }}>
-          {filteredConversations.map((conversation) => (
-            <ListItem key={conversation.id} disablePadding sx={{ mb: 1 }}>
-              <ListItemButton
-                selected={selectedConversation?.id === conversation.id}
+        <Box sx={{ flexGrow: 1, overflow: "auto" }}>
+          {filteredConversations.map((conversation) => {
+            const isSelected = selectedConversation?.id === conversation.id;
+            const partnerUser = users[conversation.partnerId];
+
+            return (
+              <Box
+                key={conversation.id}
                 onClick={() => setSelectedConversation(conversation)}
                 sx={{
-                  borderRadius: 2,
-                  transition: "all 0.2s ease",
-                  "&.Mui-selected": {
-                    bgcolor: "rgba(255, 103, 31, 0.08)",
-                    "&:hover": {
-                      bgcolor: "rgba(255, 103, 31, 0.12)",
-                    },
+                  px: 2,
+                  py: { xs: 2, md: 1.75 },
+                  cursor: "pointer",
+                  bgcolor: isSelected ? "rgba(255, 103, 31, 0.06)" : "transparent",
+                  borderLeft: isSelected ? "3px solid #ff671f" : "3px solid transparent",
+                  transition: "all 0.15s ease",
+                  "&:active": {
+                    bgcolor: "rgba(255, 103, 31, 0.12)",
                   },
                   "&:hover": {
-                    bgcolor: "rgba(245, 245, 245, 0.5)",
+                    bgcolor: isSelected ? "rgba(255, 103, 31, 0.06)" : "#f5f5f5",
                   },
                 }}
               >
-                <ListItemAvatar sx={{ minWidth: 64 }}>
-                  <Badge
-                    badgeContent={conversation.unreadCount}
-                    color="primary"
-                    sx={{
-                      "& .MuiBadge-badge": {
-                        bgcolor: "#ff671f",
-                      },
-                    }}
-                  >
+                <Box sx={{ display: "flex", gap: { xs: 1.5, md: 1.25 }, alignItems: "flex-start" }}>
+                  {/* Avatar */}
+                  <Box sx={{ position: "relative" }}>
                     <Avatar
                       src={conversation.partnerAvatar}
-                      alt={conversation.partnerName}
-                      sx={{ width: 48, height: 48 }}
+                      sx={{ width: { xs: 56, md: 48 }, height: { xs: 56, md: 48 } }}
+                    />
+                    {conversation.unreadCount > 0 && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: -4,
+                          right: -4,
+                          minWidth: { xs: 22, md: 20 },
+                          height: { xs: 22, md: 20 },
+                          px: 0.5,
+                          bgcolor: "#ff671f",
+                          borderRadius: "10px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "2px solid white",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: { xs: "11px", md: "10px" },
+                            fontWeight: 700,
+                            color: "white",
+                          }}
+                        >
+                          {conversation.unreadCount}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+
+                  {/* Content */}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    {/* Name & Time */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        mb: 0.5,
+                      }}
                     >
-                      {!conversation.partnerAvatar && <AccountCircleIcon />}
-                    </Avatar>
-                  </Badge>
-                </ListItemAvatar>
-                <ListItemText
-                  sx={{
-                    overflow: "hidden",
-                    minWidth: 0,
-                  }}
-                  primary={
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, flexWrap: "wrap" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
+                        <Typography
+                          sx={{
+                            fontFamily: "'Inter', sans-serif",
+                            fontSize: { xs: "16px", md: "14px" },
+                            fontWeight: 600,
+                            color: "#353131",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {conversation.partnerName}
+                        </Typography>
+                        {partnerUser?.verification.hasVerifiedEmail &&
+                          partnerUser?.verification.hasVerifiedPhone && (
+                            <Box sx={{ flexShrink: 0 }}>
+                              <VerifiedBadge size="small" />
+                            </Box>
+                          )}
+                      </Box>
                       <Typography
                         sx={{
-                          fontFamily: "'Roboto', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "14px",
-                          color: "#353131",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          maxWidth: "140px",
-                        }}
-                      >
-                        {conversation.partnerName}
-                      </Typography>
-                      {users[conversation.partnerId]?.verification.hasVerifiedEmail && 
-                       users[conversation.partnerId]?.verification.hasVerifiedPhone && (
-                        <VerifiedBadge size="small" />
-                      )}
-                      <Chip
-                        label={conversation.myRole}
-                        size="small"
-                        sx={{
-                          height: 20,
-                          fontSize: "10px",
-                          bgcolor: conversation.myRole === "Risikogeber" ? "#2196f3" : "#9c27b0",
-                          color: "white",
-                          fontWeight: 600,
-                        }}
-                      />
-                    </Box>
-                  }
-                  secondary={
-                    <Box>
-                      {/* Risiko-Titel */}
-                      <Typography
-                        component="span"
-                        sx={{
-                          fontSize: "12px",
-                          color: "#353131",
-                          fontWeight: 500,
-                          display: "block",
-                          mb: 0.5,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {conversation.riskTitle}
-                      </Typography>
-                      
-                      {/* Angebot - wenn vorhanden */}
-                      {conversation.currentOffer && (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
-                          <Typography
-                            component="span"
-                            sx={{
-                              fontSize: "11px",
-                              color: "#757575",
-                            }}
-                          >
-                            Angebot:
-                          </Typography>
-                          <Typography
-                            component="span"
-                            sx={{
-                              fontSize: "12px",
-                              fontWeight: 700,
-                              color: "#ff671f",
-                            }}
-                          >
-                            {formatCurrency(conversation.currentOffer.premium)}
-                          </Typography>
-                          <Chip
-                            label={
-                              conversation.currentOffer.status === "accepted"
-                                ? "Angenommen"
-                                : conversation.currentOffer.status === "declined"
-                                ? "Abgelehnt"
-                                : "Offen"
-                            }
-                            size="small"
-                            sx={{
-                              height: 16,
-                              fontSize: "9px",
-                              bgcolor:
-                                conversation.currentOffer.status === "accepted"
-                                  ? "#4caf50"
-                                  : conversation.currentOffer.status === "declined"
-                                  ? "#f44336"
-                                  : "#ff9800",
-                              color: "white",
-                              fontWeight: 600,
-                            }}
-                          />
-                        </Box>
-                      )}
-                      
-                      {/* Letzte Nachricht */}
-                      <Typography
-                        component="span"
-                        sx={{
-                          fontSize: "12px",
-                          color: "#757575",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 1,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {conversation.lastMessage}
-                      </Typography>
-                      
-                      {/* Zeitstempel */}
-                      <Typography
-                        component="span"
-                        sx={{
-                          fontSize: "11px",
+                          fontSize: { xs: "12px", md: "11px" },
                           color: "#9e9e9e",
-                          display: "block",
-                          mt: 0.5,
+                          whiteSpace: "nowrap",
+                          ml: 1,
                         }}
                       >
                         {formatDate(conversation.lastMessageTime)}
                       </Typography>
                     </Box>
-                  }
-                  secondaryTypographyProps={{
-                    component: "div",
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-      </Box>
 
-      {/* Right Side - Messages and Risk Details */}
-      <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-        {selectedConversation ? (
-          <>
-            {/* Risk & Offer Header */}
-            <Paper
-              elevation={0}
-              sx={{
-                borderBottom: "1px solid rgba(230, 229, 229, 0.4)",
-                bgcolor: "white",
-                p: 3,
-              }}
-            >
-              {/* Risiko-Titel und Status */}
-              <Box sx={{ mb: 2 }}>
-                <Typography
-                  sx={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontWeight: 700,
-                    fontSize: "20px",
-                    color: "#353131",
-                    mb: 1,
-                  }}
-                >
-                  {selectedConversation.riskTitle}
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Chip
-                    label={selectedConversation.riskCategory}
-                    size="small"
-                    sx={{
-                      bgcolor: "#f3f2f2",
-                      color: "#4f4a4a",
-                    }}
-                  />
-                  <Chip
-                    label={`Risikobewertung ${selectedConversation.riskLevel}/5`}
-                    size="small"
-                    sx={{
-                      bgcolor: getRiskLevelColor(selectedConversation.riskLevel),
-                      color: "white",
-                      fontWeight: 600,
-                    }}
-                  />
-                  <Chip
-                    label={getStatusLabel(selectedConversation.riskStatus)}
-                    size="small"
-                    variant="outlined"
-                    sx={{
-                      borderColor: "#e6e5e5",
-                      color: "#4f4a4a",
-                    }}
-                  />
-                </Box>
-              </Box>
-
-              {/* Aktuelles Angebot - wenn vorhanden */}
-              {selectedConversation.currentOffer && (
-                <Box
-                  sx={{
-                    p: 2,
-                    bgcolor: selectedConversation.currentOffer.status === "accepted" 
-                      ? "rgba(76, 175, 80, 0.08)" 
-                      : selectedConversation.currentOffer.status === "declined"
-                      ? "rgba(244, 67, 54, 0.08)"
-                      : "rgba(255, 103, 31, 0.08)",
-                    borderRadius: 2,
-                    border: `2px solid ${
-                      selectedConversation.currentOffer.status === "accepted"
-                        ? "#4caf50"
-                        : selectedConversation.currentOffer.status === "declined"
-                        ? "#f44336"
-                        : "#ff671f"
-                    }`,
-                  }}
-                >
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontSize: "12px",
-                          color: "#757575",
-                          textTransform: "uppercase",
-                          mb: 0.5,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {selectedConversation.myRole === "Risikogeber" 
-                          ? "Angebot von " + selectedConversation.partnerName
-                          : "Ihr Angebot"}
-                      </Typography>
-                      <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
-                        <Typography
-                          sx={{
-                            fontSize: "28px",
-                            fontWeight: 700,
-                            color: "#ff671f",
-                          }}
-                        >
-                          {formatCurrency(selectedConversation.currentOffer.premium)}
-                        </Typography>
-                        <Typography sx={{ fontSize: "14px", color: "#757575" }}>
-                          für {formatCurrency(selectedConversation.riskCoverageAmount)} Absicherung
-                        </Typography>
-                      </Box>
-                      {selectedConversation.currentOffer.recommendedPriceRange && (
-                        <Typography sx={{ fontSize: "12px", color: "#757575", mt: 0.5 }}>
-                          Empfohlene Spanne: {formatCurrency(selectedConversation.currentOffer.recommendedPriceRange.min)} - {formatCurrency(selectedConversation.currentOffer.recommendedPriceRange.max)}
-                        </Typography>
-                      )}
-                    </Box>
-                    <Chip
-                      label={
-                        selectedConversation.currentOffer.status === "accepted"
-                          ? "Angenommen"
-                          : selectedConversation.currentOffer.status === "declined"
-                          ? "Abgelehnt"
-                          : "Offen"
-                      }
+                    {/* Risk Title */}
+                    <Typography
                       sx={{
-                        bgcolor:
-                          selectedConversation.currentOffer.status === "accepted"
-                            ? "#4caf50"
-                            : selectedConversation.currentOffer.status === "declined"
-                            ? "#f44336"
-                            : "#ff671f",
-                        color: "white",
-                        fontWeight: 600,
-                      }}
-                    />
-                  </Box>
-                </Box>
-              )}
-            </Paper>
-
-            {/* Messages Area */}
-            <Box
-              sx={{
-                flexGrow: 1,
-                overflow: "auto",
-                p: 3,
-                bgcolor: "#fdfcfc",
-              }}
-            >
-              {messages.map((message) => (
-                <Box
-                  key={message.id}
-                  sx={{
-                    mb: 3,
-                    display: "flex",
-                    gap: 2,
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <Avatar
-                    src={message.senderAvatar}
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      bgcolor: message.isSystemMessage ? "#ff671f" : "#e0e0e0",
-                    }}
-                  >
-                    {message.isSystemMessage ? (
-                      <InfoIcon sx={{ fontSize: 20 }} />
-                    ) : !message.senderAvatar ? (
-                      <AccountCircleIcon />
-                    ) : null}
-                  </Avatar>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1.5,
+                        fontSize: { xs: "13px", md: "12px" },
+                        fontWeight: 500,
+                        color: "#757575",
                         mb: 0.5,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
+                      {conversation.riskTitle}
+                    </Typography>
+
+                    {/* Last Message */}
+                    <Typography
+                      sx={{
+                        fontSize: { xs: "14px", md: "13px" },
+                        color: conversation.unreadCount > 0 ? "#353131" : "#9e9e9e",
+                        fontWeight: conversation.unreadCount > 0 ? 500 : 400,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {conversation.lastMessage}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
+
+      {/* Chat Area */}
+      <Fade in={showChat} timeout={200}>
+        <Box
+          sx={{
+            flex: 1,
+            display: showChat ? "flex" : "none",
+            flexDirection: "column",
+            position: { xs: "absolute", md: "relative" },
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: { xs: selectedConversation ? 3 : 0, md: 1 },
+            bgcolor: "#fdfcfc",
+          }}
+        >
+          {selectedConversation ? (
+            <>
+              {/* Chat Header */}
+              <Box
+                sx={{
+                  p: { xs: 2, md: 2 },
+                  pt: { xs: isMobile ? 8 : 2, md: 2 },
+                  borderBottom: "1px solid #e6e5e5",
+                  bgcolor: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 2,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 2 }, flex: 1, minWidth: 0 }}>
+                  {/* Back Button (Mobile only) */}
+                  {isMobile && (
+                    <IconButton
+                      onClick={handleBackToList}
+                      sx={{
+                        color: "#353131",
+                        p: 1,
+                      }}
+                    >
+                      <ArrowBackIcon sx={{ fontSize: 24 }} />
+                    </IconButton>
+                  )}
+
+                  <Avatar
+                    src={selectedConversation.partnerAvatar}
+                    sx={{ width: { xs: 44, md: 40 }, height: { xs: 44, md: 40 } }}
+                  />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                       <Typography
                         sx={{
-                          fontSize: "13px",
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: { xs: "17px", md: "16px" },
                           fontWeight: 600,
                           color: "#353131",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
                         }}
                       >
-                        {message.senderName}
+                        {selectedConversation.partnerName}
                       </Typography>
-                      {message.senderVerified && !message.isSystemMessage && (
-                        <VerifiedBadge size="small" />
-                      )}
-                      <Typography sx={{ fontSize: "11px", color: "#9e9e9e" }}>
-                        {formatDate(message.timestamp)}
-                      </Typography>
+                      {users[selectedConversation.partnerId]?.verification.hasVerifiedEmail &&
+                        users[selectedConversation.partnerId]?.verification.hasVerifiedPhone && (
+                          <Box sx={{ flexShrink: 0 }}>
+                            <VerifiedBadge size="small" />
+                          </Box>
+                        )}
                     </Box>
-                    <Paper
-                      elevation={0}
+                    <Typography
                       sx={{
-                        p: 2,
-                        bgcolor: message.isSystemMessage
-                          ? "rgba(255, 103, 31, 0.08)"
-                          : "white",
-                        border: message.isSystemMessage
-                          ? "1px solid rgba(255, 103, 31, 0.2)"
-                          : "1px solid rgba(230, 229, 229, 0.4)",
-                        borderRadius: 2,
+                        fontSize: { xs: "13px", md: "12px" },
+                        color: "#757575",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      <Typography sx={{ fontSize: "14px", color: "#353131" }}>
-                        {message.content}
-                      </Typography>
-
-                      {/* Offer Card */}
-                      {message.offerData && (
-                        <Box sx={{ mt: 2 }}>
-                          <OfferMessageCard
-                            offer={message.offerData}
-                            onAccept={handleAcceptOffer}
-                            onDecline={handleDeclineOffer}
-                            isCurrentUser={message.senderId === currentUser.id}
-                          />
-                        </Box>
-                      )}
-
-                      {/* Risk References */}
-                      {message.riskReferences && message.riskReferences.length > 0 && (
-                        <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
-                          {message.riskReferences.map((ref, idx) => (
-                            <Box
-                              key={idx}
-                              sx={{
-                                p: 1.5,
-                                bgcolor:
-                                  ref.status === "critical"
-                                    ? "rgba(244, 67, 54, 0.08)"
-                                    : "rgba(255, 152, 0, 0.08)",
-                                borderRadius: 1,
-                                border: `1px solid ${
-                                  ref.status === "critical" ? "#f44336" : "#ff9800"
-                                }`,
-                              }}
-                            >
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                }}
-                              >
-                                <Typography sx={{ fontSize: "12px", fontWeight: 600 }}>
-                                  {ref.parameter}
-                                </Typography>
-                                <Typography
-                                  sx={{
-                                    fontSize: "12px",
-                                    fontWeight: 600,
-                                    color:
-                                      ref.status === "critical" ? "#f44336" : "#ff9800",
-                                  }}
-                                >
-                                  {ref.currentValue}
-                                  {ref.threshold && ` / ${ref.threshold}`}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          ))}
-                        </Box>
-                      )}
-
-                      {/* Attachments */}
-                      {message.attachments && message.attachments.length > 0 && (
-                        <Box sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-                          {message.attachments.map((attachment) => (
-                            <Chip
-                              key={attachment.id}
-                              icon={<DescriptionIcon />}
-                              label={`${attachment.name} (${attachment.size})`}
-                              clickable
-                              size="small"
-                              sx={{
-                                bgcolor: "#f5f5f5",
-                                "&:hover": {
-                                  bgcolor: "rgba(255, 103, 31, 0.08)",
-                                },
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      )}
-                    </Paper>
+                      {selectedConversation.riskTitle}
+                    </Typography>
                   </Box>
                 </Box>
-              ))}
-            </Box>
 
-            {/* Message Input */}
-            <Paper
-              elevation={0}
+                {/* Action Buttons */}
+                <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => onOpenRiskDetail?.(selectedConversation.riskId)}
+                    sx={{
+                      borderColor: "#e6e5e5",
+                      color: "#353131",
+                      textTransform: "none",
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: { xs: "13px", md: "13px" },
+                      fontWeight: 600,
+                      px: { xs: 1.5, md: 2 },
+                      py: 1,
+                      borderRadius: "8px",
+                      minWidth: { xs: "auto", md: "auto" },
+                      "&:hover": {
+                        borderColor: "#ff671f",
+                        bgcolor: "rgba(255, 103, 31, 0.04)",
+                      },
+                    }}
+                  >
+                    <InfoIcon sx={{ fontSize: 16, mr: { xs: 0, md: 0.5 } }} />
+                    <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+                      Anliegen
+                    </Box>
+                  </Button>
+                </Box>
+              </Box>
+
+              {/* Messages Area */}
+              <Box
+                sx={{
+                  flex: 1,
+                  overflow: "auto",
+                  p: { xs: 2, md: 3 },
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: { xs: 2.5, md: 3 },
+                }}
+              >
+                {messages.map((message) => {
+                  const isCurrentUser = message.senderId === currentUser.id;
+                  const isSystem = message.isSystemMessage;
+
+                  return (
+                    <Box
+                      key={message.id}
+                      sx={{
+                        display: "flex",
+                        gap: { xs: 1.25, md: 1.5 },
+                        alignItems: "flex-start",
+                        flexDirection: isCurrentUser && !isSystem ? "row-reverse" : "row",
+                      }}
+                    >
+                      {/* Avatar */}
+                      <Avatar
+                        src={message.senderAvatar}
+                        sx={{
+                          width: { xs: 36, md: 32 },
+                          height: { xs: 36, md: 32 },
+                          bgcolor: isSystem ? "#ff671f" : "#e0e0e0",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isSystem && <InfoIcon sx={{ fontSize: { xs: 20, md: 18 } }} />}
+                      </Avatar>
+
+                      {/* Message Content */}
+                      <Box
+                        sx={{
+                          maxWidth: { xs: "75%", md: "65%" },
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 0.5,
+                          alignItems: isCurrentUser && !isSystem ? "flex-end" : "flex-start",
+                        }}
+                      >
+                        {/* Sender & Time */}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: { xs: "13px", md: "12px" },
+                              fontWeight: 600,
+                              color: "#757575",
+                            }}
+                          >
+                            {message.senderName}
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: { xs: "12px", md: "11px" },
+                              color: "#9e9e9e",
+                            }}
+                          >
+                            {formatDate(message.timestamp)}
+                          </Typography>
+                        </Box>
+
+                        {/* Message Bubble */}
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            px: { xs: 2, md: 2 },
+                            py: { xs: 1.75, md: 1.5 },
+                            bgcolor: isCurrentUser && !isSystem
+                              ? "#ff671f"
+                              : isSystem
+                              ? "rgba(255, 103, 31, 0.08)"
+                              : "white",
+                            border: isSystem
+                              ? "1px solid rgba(255, 103, 31, 0.2)"
+                              : isCurrentUser && !isSystem
+                              ? "none"
+                              : "1px solid #e6e5e5",
+                            borderRadius: "16px",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: { xs: "15px", md: "14px" },
+                              color: isCurrentUser && !isSystem ? "white" : "#353131",
+                              lineHeight: 1.5,
+                              whiteSpace: "pre-wrap",
+                              wordBreak: "break-word",
+                            }}
+                          >
+                            {message.content}
+                          </Typography>
+                        </Paper>
+                      </Box>
+                    </Box>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </Box>
+
+              {/* Message Input */}
+              <Box
+                sx={{
+                  p: { xs: 2, md: 2 },
+                  pb: { xs: 2, md: 2 },
+                  borderTop: "1px solid #e6e5e5",
+                  bgcolor: "white",
+                  // Safe area inset for iOS notch
+                  paddingBottom: { xs: "max(16px, env(safe-area-inset-bottom))", md: 2 },
+                }}
+              >
+                <Paper
+                  elevation={0}
+                  sx={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                    gap: { xs: 1.25, md: 1.5 },
+                    px: { xs: 2, md: 2 },
+                    py: { xs: 1.25, md: 1.5 },
+                    bgcolor: "#f5f5f5",
+                    borderRadius: "16px",
+                    border: "1px solid transparent",
+                    transition: "all 0.2s ease",
+                    "&:focus-within": {
+                      borderColor: "#ff671f",
+                      bgcolor: "white",
+                    },
+                  }}
+                >
+                  <InputBase
+                    multiline
+                    maxRows={4}
+                    placeholder="Nachricht..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    sx={{
+                      flex: 1,
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: { xs: "16px", md: "14px" },
+                      "& input::placeholder, & textarea::placeholder": {
+                        color: "#9e9e9e",
+                        opacity: 1,
+                      },
+                    }}
+                  />
+                  <IconButton
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim()}
+                    sx={{
+                      bgcolor: newMessage.trim() ? "#ff671f" : "#e6e5e5",
+                      color: "white",
+                      width: { xs: 40, md: 36 },
+                      height: { xs: 40, md: 36 },
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        bgcolor: newMessage.trim() ? "#e65a1a" : "#e6e5e5",
+                      },
+                      "&:disabled": {
+                        bgcolor: "#e6e5e5",
+                        color: "#9e9e9e",
+                      },
+                      "&:active": {
+                        transform: newMessage.trim() ? "scale(0.95)" : "none",
+                      },
+                    }}
+                  >
+                    <SendIcon sx={{ fontSize: { xs: 20, md: 18 } }} />
+                  </IconButton>
+                </Paper>
+              </Box>
+            </>
+          ) : (
+            <Box
               sx={{
-                p: 3,
-                borderTop: "1px solid rgba(230, 229, 229, 0.4)",
-                bgcolor: "white",
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "column",
+                gap: 2,
               }}
             >
-              <Box sx={{ display: "flex", gap: 2, alignItems: "flex-end" }}>
-                <IconButton
-                  sx={{
-                    color: "#4f4a4a",
-                    "&:hover": {
-                      bgcolor: "rgba(255, 103, 31, 0.08)",
-                    },
-                  }}
-                >
-                  <AttachFileIcon />
-                </IconButton>
-                <TextField
-                  fullWidth
-                  multiline
-                  maxRows={4}
-                  placeholder="Nachricht schreiben..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      "& fieldset": {
-                        borderColor: "rgba(230, 229, 229, 0.4)",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "rgba(255, 103, 31, 0.3)",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#ff671f",
-                      },
-                    },
-                  }}
-                />
-                <Button
-                  variant="contained"
-                  endIcon={<SendIcon />}
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim()}
-                  sx={{
-                    bgcolor: "#ff671f",
-                    color: "white",
-                    px: 3,
-                    py: 1.5,
-                    borderRadius: 2,
-                    textTransform: "none",
-                    boxShadow: "0 4px 16px rgba(255, 103, 31, 0.25)",
-                    "&:hover": {
-                      bgcolor: "#e05a1b",
-                    },
-                    "&:disabled": {
-                      bgcolor: "#e0e0e0",
-                      color: "#9e9e9e",
-                    },
-                  }}
-                >
-                  Senden
-                </Button>
-              </Box>
-            </Paper>
-          </>
-        ) : (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              color: "#9e9e9e",
-            }}
-          >
-            <Typography>Wähle eine Konversation aus</Typography>
-          </Box>
-        )}
-      </Box>
+              <InfoIcon sx={{ fontSize: 64, color: "#e6e5e5" }} />
+              <Typography
+                sx={{
+                  fontSize: "16px",
+                  color: "#9e9e9e",
+                  fontFamily: "'Inter', sans-serif",
+                }}
+              >
+                Wähle eine Unterhaltung
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Fade>
     </Box>
   );
 }

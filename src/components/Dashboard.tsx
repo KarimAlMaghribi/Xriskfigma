@@ -1,50 +1,46 @@
 import { useState } from "react";
 import {
   Box,
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  Stack,
-  Button,
-  Avatar,
   IconButton,
 } from "@mui/material";
 import {
-  Visibility as VisibilityIcon,
-  Favorite as FavoriteIcon,
+  Assignment as AssignmentIcon,
   LocalOffer as OfferIcon,
-  Euro as EuroIcon,
-  CalendarMonth as CalendarIcon,
-  CheckCircle as CheckCircleIcon,
+  Shield as ShieldIcon,
+  TrendingUp as TrendingUpIcon,
 } from "@mui/icons-material";
 import { communityRisks } from "../lib/community-mock-data";
 import { offers as allOffers } from "../lib/offers-mock-data";
-import {
-  categoryLabels,
-  Risk,
-} from "../types/risk";
-
+import { Risk } from "../types/risk";
 import { RiskCard } from "./RiskCard";
 import { CreateRiskCard } from "./CreateRiskCard";
-import { users } from "../lib/user-mock-data";
 import { DeleteRiskDialog } from "./DeleteRiskDialog";
+import { StatusBadge, CustomBadge } from "./StatusBadge";
+import { PageHeader } from "./ui/PageHeader";
+import { Section } from "./ui/Section";
+import { GridLayout } from "./ui/GridLayout";
+import { StatCard } from "./ui/StatCard";
+import { EmptyState } from "./ui/EmptyState";
 import { toast } from "sonner@2.0.3";
 import { CURRENT_USER_ID } from "../lib/current-user";
-import { StatusBadge, CustomBadge } from "./StatusBadge";
 
 interface DashboardProps {
   newRisks?: Risk[];
   onCreateRiskClick?: () => void;
   onDeleteRisk?: (riskId: string) => void;
-  onRiskDetails?: (risk: Risk) => void;
+  onRiskDetails?: (risk: Risk, context: 'marketplace' | 'own' | 'taken') => void;
 }
 
-export function Dashboard({ newRisks = [], onCreateRiskClick, onDeleteRisk, onRiskDetails }: DashboardProps) {
+export function Dashboard({ 
+  newRisks = [], 
+  onCreateRiskClick, 
+  onDeleteRisk, 
+  onRiskDetails 
+}: DashboardProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [riskToDelete, setRiskToDelete] = useState<Risk | null>(null);
 
-  // Angebotene Risiken vom aktuellen Nutzer (combine with new risks, include drafts)
+  // Angebotene Risiken vom aktuellen Nutzer
   const myOfferedRisks = [
     ...newRisks,
     ...communityRisks.filter(
@@ -59,12 +55,8 @@ export function Dashboard({ newRisks = [], onCreateRiskClick, onDeleteRisk, onRi
     (r) => r.status === "active" && r.userRole === "taker"
   );
 
-
-
   const handleCreateRisk = () => {
-    if (onCreateRiskClick) {
-      onCreateRiskClick();
-    }
+    onCreateRiskClick?.();
   };
 
   const handleDeleteClick = (risk: Risk) => {
@@ -74,24 +66,19 @@ export function Dashboard({ newRisks = [], onCreateRiskClick, onDeleteRisk, onRi
 
   const handleConfirmDelete = () => {
     if (riskToDelete) {
-      if (onDeleteRisk) {
-        onDeleteRisk(riskToDelete.id);
-      }
-      toast.success(`Risiko "${riskToDelete.title}" wurde gelöscht`);
+      onDeleteRisk?.(riskToDelete.id);
+      toast.success(`"${riskToDelete.title}" wurde gelöscht`);
       setDeleteDialogOpen(false);
       setRiskToDelete(null);
     }
   };
 
   const handlePublishRisk = (risk: Risk) => {
-    // In a real app, this would make an API call to publish the risk
-    // For now, we'll just show a success message
-    toast.success(`Risiko "${risk.title}" wurde veröffentlicht`, {
-      description: "Das Risiko ist jetzt in der Riskobörse sichtbar und kann von anderen Nutzern übernommen werden.",
+    toast.success(`"${risk.title}" wurde veröffentlicht`, {
+      description: "Dein Anliegen ist jetzt sichtbar. Menschen, die sich auskennen, können dir Angebote machen.",
       duration: 5000,
     });
     
-    // Update the risk status in the communityRisks array
     const riskIndex = communityRisks.findIndex(r => r.id === risk.id);
     if (riskIndex !== -1) {
       communityRisks[riskIndex].status = "evaluating";
@@ -102,59 +89,77 @@ export function Dashboard({ newRisks = [], onCreateRiskClick, onDeleteRisk, onRi
     return allOffers.filter((o) => o.riskId === riskId && o.status === "pending");
   };
 
+  // Statistiken berechnen
+  const totalOffers = myOfferedRisks.reduce((sum, risk) => {
+    return sum + getRiskOffers(risk.id).length;
+  }, 0);
+
+  const totalEarnings = mySecuredRisks.reduce((sum, risk) => {
+    return sum + (risk.premium || 0);
+  }, 0);
+
+  const stats = [
+    {
+      label: "Deine Anliegen",
+      value: myOfferedRisks.length,
+      icon: <AssignmentIcon />,
+      color: "#ff671f",
+      bgColor: "#fef5f0",
+    },
+    {
+      label: "Erhaltene Angebote",
+      value: totalOffers,
+      icon: <OfferIcon sx={{ fontSize: 24 }} />,
+      color: "#4CAF50",
+      bgColor: "#f1f8f4",
+    },
+    {
+      label: "Du sicherst ab",
+      value: mySecuredRisks.length,
+      icon: <ShieldIcon />,
+      color: "#2196F3",
+      bgColor: "#f0f7ff",
+    },
+    {
+      label: "Verdient",
+      value: `${totalEarnings} €`,
+      icon: <TrendingUpIcon />,
+      color: "#9C27B0",
+      bgColor: "#f8f0fa",
+    },
+  ];
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 4, md: 6, lg: 10 } }}>
       {/* Header */}
-      <Box>
-        <Typography
-          sx={{
-            fontFamily: "'Inter', sans-serif",
-            fontWeight: 900,
-            fontSize: "32px",
-            color: "#353131",
-            mb: 0.5,
-          }}
-        >
-          Dashboard
-        </Typography>
-        <Typography className="body-sm text-secondary">
-          Übersicht Ihrer Risiken
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Dein Überblick"
+        description="Deine Anliegen und aktive Absicherungen"
+      />
+
+      {/* Statistiken */}
+      <GridLayout columns={{ xs: 2, md: 4 }} gap={3}>
+        {stats.map((stat, index) => (
+          <StatCard
+            key={index}
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            color={stat.color}
+            bgColor={stat.bgColor}
+          />
+        ))}
+      </GridLayout>
 
       {/* Angebotene Risiken Section */}
-      <Box>
-        <Typography
-          sx={{
-            fontFamily: "'Inter', sans-serif",
-            fontWeight: 700,
-            fontSize: "20px",
-            color: "#353131",
-            mb: 2,
-          }}
-        >
-          Meine angebotenen Risiken
-        </Typography>
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(3, 1fr)",
-              lg: "repeat(4, 1fr)",
-            },
-            gap: 3,
-          }}
-        >
+      <Section title="Deine Anliegen">
+        <GridLayout>
           {myOfferedRisks.map((risk) => {
             const riskOffers = getRiskOffers(risk.id);
             const cheapestOffer = riskOffers.length > 0 
               ? riskOffers.reduce((min, offer) => offer.premium < min.premium ? offer : min, riskOffers[0])
               : null;
             
-            // Custom badges for offered risks
             const customBadges = risk.status === "evaluating" ? (
               <StatusBadge status="evaluating" />
             ) : cheapestOffer ? (
@@ -175,7 +180,7 @@ export function Dashboard({ newRisks = [], onCreateRiskClick, onDeleteRisk, onRi
                 risk={risk}
                 variant="dashboard"
                 onTakeRisk={() => {}}
-                onDetailsClick={onRiskDetails}
+                onDetailsClick={(r) => onRiskDetails?.(r, 'own')}
                 onPublish={handlePublishRisk}
                 customBadges={customBadges}
                 hideUser={true}
@@ -187,44 +192,15 @@ export function Dashboard({ newRisks = [], onCreateRiskClick, onDeleteRisk, onRi
             );
           })}
           <CreateRiskCard onClick={handleCreateRisk} />
-        </Box>
-      </Box>
+        </GridLayout>
+      </Section>
 
       {/* Abgesicherte Risiken Section */}
-      <Box>
-        <Typography
-          sx={{
-            fontFamily: "'Inter', sans-serif",
-            fontWeight: 700,
-            fontSize: "20px",
-            color: "#353131",
-            mb: 2,
-          }}
-        >
-          Meine abgesicherten Risiken
-        </Typography>
-
+      <Section title="Du sicherst ab">
         {mySecuredRisks.length === 0 ? (
-          <Card elevation={0} sx={{ bgcolor: "#f3f2f2" }}>
-            <CardContent sx={{ py: 4, textAlign: "center" }}>
-              <Typography className="body-sm text-secondary">
-                Sie haben noch keine Risiken abgesichert
-              </Typography>
-            </CardContent>
-          </Card>
+          <EmptyState message="Du hast aktuell keine laufenden Absicherungen" />
         ) : (
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(3, 1fr)",
-                lg: "repeat(4, 1fr)",
-              },
-              gap: 3,
-            }}
-          >
+          <GridLayout>
             {mySecuredRisks.map((risk) => {
               const daysRemaining = risk.expiresAt
                 ? Math.ceil(
@@ -233,7 +209,6 @@ export function Dashboard({ newRisks = [], onCreateRiskClick, onDeleteRisk, onRi
                   )
                 : 0;
               
-              // Custom badges for secured risks
               const customBadges = (
                 <>
                   <CustomBadge 
@@ -253,7 +228,7 @@ export function Dashboard({ newRisks = [], onCreateRiskClick, onDeleteRisk, onRi
                   risk={risk}
                   variant="dashboard"
                   onTakeRisk={() => {}}
-                  onDetailsClick={onRiskDetails}
+                  onDetailsClick={(r) => onRiskDetails?.(r, 'taken')}
                   customActionLabel="Laufend"
                   customActionDisabled={true}
                   customBadges={customBadges}
@@ -262,9 +237,9 @@ export function Dashboard({ newRisks = [], onCreateRiskClick, onDeleteRisk, onRi
                 />
               );
             })}
-          </Box>
+          </GridLayout>
         )}
-      </Box>
+      </Section>
 
       {/* Delete Risk Dialog */}
       <DeleteRiskDialog

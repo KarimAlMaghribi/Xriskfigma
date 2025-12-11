@@ -40,6 +40,7 @@ export function ExpertiseSection({
                   alt=""
                   className="absolute inset-0 max-w-none object-cover rounded-[24px] w-full h-full"
                   src={card1Image}
+                  style={{ filter: 'blur(120px)' }}
                 />
               </div>
               <p className="text-lg-medium text-inverse relative z-10">{card1Label}</p>
@@ -55,6 +56,7 @@ export function ExpertiseSection({
                   alt=""
                   className="absolute inset-0 max-w-none object-cover rounded-[24px] w-full h-full"
                   src={card2Image}
+                  style={{ filter: 'blur(120px)' }}
                 />
               </div>
               <p className="text-lg-medium text-inverse relative z-10">{card2Label}</p>

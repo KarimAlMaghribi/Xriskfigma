@@ -101,32 +101,32 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
   const loadingPhases: LoadingPhase[] = [
     {
       id: 0,
-      title: "Eingaben analysieren",
-      description: "Ihre Risikobeschreibung wird verarbeitet...",
+      title: "Deine Eingaben verstehen",
+      description: "Wir schauen uns an, was Du absichern möchtest...",
       icon: <Search size={24} />,
       duration: 2500,
       progress: 25,
     },
     {
       id: 1,
-      title: "Kontext verstehen",
-      description: "Kategorie und Risikotyp werden ermittelt...",
+      title: "Kontext checken",
+      description: "Welche Art von Absicherung passt am besten?",
       icon: <BarChart3 size={24} />,
       duration: 2500,
       progress: 50,
     },
     {
       id: 2,
-      title: "Rückfragen ermitteln",
-      description: "Notwendige Informationen werden identifiziert...",
+      title: "Wichtige Infos ermitteln",
+      description: "Was brauchen wir noch von Dir?",
       icon: <TrendingUp size={24} />,
       duration: 2500,
       progress: 75,
     },
     {
       id: 3,
-      title: "Fragebogen vorbereiten",
-      description: "Spezifische Fragen werden generiert...",
+      title: "Fragen vorbereiten",
+      description: "Gleich geht's weiter mit ein paar Details...",
       icon: <Zap size={24} />,
       duration: 2500,
       progress: 100,
@@ -329,10 +329,10 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
           </Avatar>
           <Box sx={{ flex: 1 }}>
             <Typography className="heading-3 text-primary" sx={{ mb: 0.5 }}>
-              Risikoeingabe & Bewertung
+              Was möchtest Du absichern?
             </Typography>
             <Typography className="body-sm text-secondary">
-              Beschreiben Sie Ihr versicherbares Risiko
+              Erzähl uns von Deinem Anliegen
             </Typography>
           </Box>
         </Box>
@@ -340,13 +340,13 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
         {/* Risikobeschreibung */}
         <Box>
           <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
-            Risikobeschreibung:
+            Dein Anliegen:
           </Typography>
           <TextField
             name="risk-description"
             id="risk-description"
             defaultValue={initialRiskDescription}
-            placeholder="Beschreiben Sie Ihr versicherbares Risiko im Detail..."
+            placeholder="z.B. Ich verleih meine Espressomaschine an meinen Nachbarn und möchte sie absichern..."
             multiline
             rows={6}
             fullWidth
@@ -355,8 +355,9 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
                 bgcolor: "#f3f2f2",
                 borderRadius: 1,
                 fontFamily: "'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: { xs: "16px", md: "16px" },
                 color: "#353131",
+                minHeight: { xs: 120, md: "auto" },
                 "& fieldset": {
                   borderColor: "#e6e5e5",
                 },
@@ -370,7 +371,7 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
               },
               "& .MuiOutlinedInput-input": {
                 fontFamily: "'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: { xs: "16px", md: "16px" },
                 "&::placeholder": {
                   color: "#4f4a4a",
                   opacity: 1,
@@ -381,10 +382,10 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
         </Box>
 
         {/* Date Fields Row */}
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
           <Box>
             <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
-              Versicherungsbeginn:
+              Schutz ab:
             </Typography>
             <TextField
               type="date"
@@ -397,8 +398,9 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
                   bgcolor: "#f3f2f2",
                   borderRadius: 1,
                   fontFamily: "'Inter', sans-serif",
-                  fontSize: "16px",
+                  fontSize: { xs: "16px", md: "16px" },
                   color: "#353131",
+                  minHeight: { xs: 56, md: "auto" },
                   "& fieldset": {
                     borderColor: "#e6e5e5",
                   },
@@ -415,7 +417,7 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
           </Box>
           <Box>
             <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
-              Versicherungsende:
+              Schutz bis:
             </Typography>
             <TextField
               type="date"
@@ -428,8 +430,9 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
                   bgcolor: "#f3f2f2",
                   borderRadius: 1,
                   fontFamily: "'Inter', sans-serif",
-                  fontSize: "16px",
+                  fontSize: { xs: "16px", md: "16px" },
                   color: "#353131",
+                  minHeight: { xs: 56, md: "auto" },
                   "& fieldset": {
                     borderColor: "#e6e5e5",
                   },
@@ -449,7 +452,7 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
         {/* Versicherungswert */}
         <Box>
           <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
-            Versicherungswert (EUR):
+            Wert (EUR):
           </Typography>
           <TextField
             type="number"
@@ -463,8 +466,9 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
                 bgcolor: "#f3f2f2",
                 borderRadius: 1,
                 fontFamily: "'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: { xs: "16px", md: "16px" },
                 color: "#353131",
+                minHeight: { xs: 56, md: "auto" },
                 "& fieldset": {
                   borderColor: "#e6e5e5",
                 },
@@ -532,10 +536,10 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
         {/* Progress Information */}
         <Box sx={{ mb: 4, textAlign: "center" }}>
           <Typography className="heading-3 text-primary" sx={{ mb: 1 }}>
-            Rückfragen werden ermittelt
+            Einen Moment...
           </Typography>
           <Typography className="body-sm text-secondary">
-            {Math.round(progress)}% abgeschlossen
+            {Math.round(progress)}% erledigt
           </Typography>
         </Box>
 
@@ -651,7 +655,7 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
         {/* Bottom Info */}
         <Box sx={{ mt: 4, textAlign: "center" }}>
           <Typography className="body-sm text-secondary" sx={{ fontStyle: "italic" }}>
-            Die KI prüft, welche Informationen für die spätere Risikoanalyse benötigt werden
+            Wir schauen, welche Details wir noch brauchen
           </Typography>
         </Box>
       </Box>
@@ -678,10 +682,10 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
           </Avatar>
           <Box sx={{ flex: 1 }}>
             <Typography className="heading-3 text-primary" sx={{ mb: 0.5 }}>
-              Zusätzliche Informationen
+              Noch ein paar Details
             </Typography>
             <Typography className="body-sm text-secondary">
-              Um Ihr Risiko besser einschätzen zu können, benötige ich noch ein paar Details
+              Damit wir Dein Anliegen richtig einschätzen können
             </Typography>
           </Box>
         </Box>
@@ -689,7 +693,7 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
         {/* Question 1 */}
         <Box>
           <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
-            Welche Marke, welches Modell und welches Baujahr hat {detectedItem === "Gerät" ? "das Gerät" : `die ${detectedItem}`}?
+            Welche Marke, welches Modell und welches Baujahr?
           </Typography>
           <TextField
             name="model-info"
@@ -730,11 +734,11 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
         {/* Question 2 */}
         <Box>
           <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
-            Wo wird {detectedItem === "Gerät" ? "es" : "sie"} während der Leihdauer genutzt/aufbewahrt (privat oder gewerblich, Standort) und welche Sicherheitsvorkehrungen inkl. Transport/Verpackung sind vorhanden?
+            Wo wird {detectedItem === "Gerät" ? "es" : "die " + detectedItem} genutzt und wie ist {detectedItem === "Gerät" ? "es" : "sie"} gesichert?
           </Typography>
           <TextField
             name="storage-security"
-            placeholder="z.B. Privat in Küche, Originalverpackung vorhanden, Transport im Auto"
+            placeholder="z.B. Privat in der Küche, Originalverpackung vorhanden, Transport im Auto"
             fullWidth
             multiline
             rows={4}
@@ -772,15 +776,15 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
   );
 
   const getTitle = () => {
-    if (step === "input") return "Risikoeingabe & Bewertung";
-    if (step === "loading") return "KI-Analyse läuft";
-    if (step === "auth") return "Anmeldung erforderlich";
-    return "Zusätzliche Informationen";
+    if (step === "input") return "Du suchst Schutz";
+    if (step === "loading") return "Einen Moment...";
+    if (step === "auth") return "Fast geschafft";
+    return "Noch ein paar Details";
   };
 
   const getSubtitle = () => {
     if (step === "input") return "Schritt 1 von 3";
-    if (step === "loading") return "Bitte warten Sie einen Moment...";
+    if (step === "loading") return "Wir prüfen Deine Angaben";
     if (step === "auth") return "Schritt 3 von 3";
     return "Schritt 2 von 3";
   };
@@ -841,10 +845,10 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
         {step === "input" ? (
           <>
             <Wand2 size={20} />
-            Risikobewertung starten
+            Jetzt absichern
           </>
         ) : (
-          "Risiko erstellen"
+          "Anliegen erstellen"
         )}
       </Button>
     </>

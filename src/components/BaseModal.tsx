@@ -7,9 +7,17 @@ import {
   Typography,
   Button,
   IconButton,
+  useMediaQuery,
+  useTheme,
+  Slide,
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
-import { ReactNode } from "react";
+import { ReactNode, forwardRef } from "react";
+
+// Slide transition from bottom
+const Transition = forwardRef(function Transition(props: any, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 interface BaseModalProps {
   open: boolean;
@@ -34,23 +42,43 @@ export function BaseModal({
   maxWidth = "sm",
   showCloseButton = false,
 }: BaseModalProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
       maxWidth={maxWidth}
       fullWidth
+      fullScreen={isMobile}
+      TransitionComponent={isMobile ? Transition : undefined}
       PaperProps={{
         sx: {
-          borderRadius: 2,
-          border: "1px solid #e6e5e5",
+          borderRadius: isMobile ? 0 : 2,
+          border: isMobile ? "none" : "1px solid #e6e5e5",
+          m: isMobile ? 0 : 2,
+          maxHeight: isMobile ? "100vh" : "calc(100vh - 64px)",
+          display: "flex",
+          flexDirection: "column",
         },
       }}
     >
+      {/* Mobile: Sticky Header */}
       <DialogTitle
         sx={{
           borderBottom: "1px solid #e6e5e5",
           pb: 2,
+          position: isMobile ? "sticky" : "relative",
+          top: 0,
+          zIndex: 10,
+          bgcolor: "#ffffff",
+          // Safe area inset for iOS devices
+          ...(isMobile && {
+            "@supports (padding: max(0px))": {
+              pt: "max(24px, env(safe-area-inset-top, 24px))",
+            },
+          }),
         }}
       >
         <Box
@@ -60,7 +88,7 @@ export function BaseModal({
             justifyContent: "space-between",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, minWidth: 0 }}>
             {icon && (
               <Box
                 sx={{
@@ -70,18 +98,20 @@ export function BaseModal({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
               >
                 {icon}
               </Box>
             )}
-            <Box>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
               <Typography
                 sx={{
                   fontFamily: "'Inter', sans-serif",
                   fontWeight: 700,
-                  fontSize: "20px",
+                  fontSize: { xs: "18px", md: "20px" },
                   color: "#353131",
+                  lineHeight: 1.2,
                 }}
               >
                 {title}
@@ -90,9 +120,10 @@ export function BaseModal({
                 <Typography
                   sx={{
                     fontFamily: "'Roboto', sans-serif",
-                    fontSize: "14px",
+                    fontSize: { xs: "13px", md: "14px" },
                     color: "#4f4a4a",
                     fontVariationSettings: "'wdth' 100",
+                    mt: 0.25,
                   }}
                 >
                   {subtitle}
@@ -101,30 +132,60 @@ export function BaseModal({
             </Box>
           </Box>
           {showCloseButton && (
-            <IconButton onClick={onClose} size="small">
+            <IconButton 
+              onClick={onClose} 
+              size={isMobile ? "medium" : "small"}
+              sx={{ 
+                ml: 1,
+                flexShrink: 0,
+              }}
+            >
               <CloseIcon />
             </IconButton>
           )}
         </Box>
       </DialogTitle>
 
+      {/* Scrollable Content */}
       <DialogContent 
         sx={{ 
-          px: 3,
-          pt: '24px !important',
-          pb: 3,
+          px: { xs: 2, md: 3 },
+          pt: '20px !important',
+          pb: { xs: 2, md: 3 },
+          flex: 1,
+          overflowY: "auto",
+          // Better scrolling on iOS
+          WebkitOverflowScrolling: "touch",
         }}
       >
         {children}
       </DialogContent>
 
+      {/* Mobile: Sticky Footer with Actions */}
       {actions && (
         <DialogActions
           sx={{
             borderTop: "1px solid #e6e5e5",
-            px: 3,
-            py: 2,
-            gap: 1,
+            px: { xs: 2, md: 3 },
+            py: { xs: 2, md: 2 },
+            gap: { xs: 1.5, md: 1 },
+            position: isMobile ? "sticky" : "relative",
+            bottom: 0,
+            zIndex: 10,
+            bgcolor: "#ffffff",
+            flexDirection: { xs: "column", sm: "row" },
+            // Safe area inset for iOS devices
+            ...(isMobile && {
+              "@supports (padding: max(0px))": {
+                pb: "max(16px, env(safe-area-inset-bottom, 16px))",
+              },
+            }),
+            // Full width buttons on mobile
+            "& > button": {
+              width: { xs: "100%", sm: "auto" },
+              minHeight: { xs: 48, md: 40 },
+              fontSize: { xs: "16px", md: "14px" },
+            },
           }}
         >
           {actions}

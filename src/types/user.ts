@@ -5,7 +5,7 @@ export interface User {
   lastName: string;
   avatar: string;
   bio: string;
-  score: number; // 0-100, based on risk history
+  stars: 1 | 2 | 3; // Trust rating: 1-3 stars
   completedRisks: number;
   totalRisks: number;
   memberSince: Date;
@@ -26,10 +26,13 @@ export function getDisplayName(user: User, format: 'full' | 'initial' = 'full'):
   return `${user.firstName} ${user.lastName}`;
 }
 
-export function getUserScore(completedRisks: number, totalRisks: number): number {
-  if (totalRisks === 0) return 100;
+export function getUserStars(completedRisks: number, totalRisks: number): 1 | 2 | 3 {
+  if (totalRisks === 0) return 3;
   const completionRate = completedRisks / totalRisks;
-  return Math.round(completionRate * 100);
+  
+  if (completionRate === 1 && completedRisks >= 10) return 3; // Perfect track record with 10+ risks
+  if (completionRate >= 0.95 || completedRisks >= 5) return 2; // 95%+ or at least 5 completed
+  return 1; // Starting level
 }
 
 export function isUserVerified(user: User): boolean {

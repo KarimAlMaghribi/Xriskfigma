@@ -3,6 +3,7 @@ import svgPaths from "../imports/svg-uh0650197e";
 import { getOffersByRisk, getUserById } from "../lib/database";
 import { CURRENT_USER_ID } from "../lib/current-user";
 import { Skeleton } from "./ui/skeleton";
+import { Tooltip } from "@mui/material";
 
 interface RiskCardProps {
   risk: Risk;
@@ -73,6 +74,30 @@ function StarIcon({ filled = false }: { filled?: boolean }) {
   );
 }
 
+// Rating Stars Component (1-3 stars)
+function RatingStars({ count }: { count: 1 | 2 | 3 }) {
+  return (
+    <div className="flex gap-[4px] items-center">
+      {[1, 2, 3].map((star) => (
+        <div key={star} className="relative shrink-0 size-[12px]">
+          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 18 18">
+            <g>
+              <path 
+                d={svgPaths.pe1f5000} 
+                fill={star <= count ? "#ff671f" : "none"}
+                stroke="#ff671f" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth="1.5" 
+              />
+            </g>
+          </svg>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Calendar Icon Component
 function CalendarIcon() {
   return (
@@ -102,17 +127,49 @@ function RiskRatingBars({ riskScore }: { riskScore: number }) {
   
   const filledBars = getRiskLevel(riskScore);
   
+  // Tooltip descriptions - identical to RiskToleranceSelector
+  const tooltipTexts = [
+    "Planbar und verlässlich – dafür etwas weniger Ertrag",
+    "Gut informiert entscheiden – mit solidem Ergebnis",
+    "Balance zwischen Absicherung und Chance – fair vergütet",
+    "Neues ausprobieren – wird entsprechend belohnt",
+    "Vorangehen und anpacken – bringt am meisten",
+  ];
+  
   return (
-    <div className="content-stretch flex gap-[8px] items-start relative shrink-0 w-full">
-      {[1, 2, 3, 4, 5].map((bar) => (
-        <div
-          key={bar}
-          className={`basis-0 ${
-            bar <= filledBars ? 'bg-[#ff671f]' : 'bg-[#d9d9d9]'
-          } grow h-[8px] min-h-px min-w-px rounded-[70px] shrink-0`}
-        />
-      ))}
-    </div>
+    <Tooltip
+      title={tooltipTexts[filledBars - 1]}
+      arrow
+      placement="top"
+      slotProps={{
+        tooltip: {
+          sx: {
+            backgroundColor: '#353131',
+            fontSize: '12px',
+            fontFamily: "'Inter', sans-serif",
+            padding: '8px 12px',
+            borderRadius: '6px',
+            maxWidth: '200px',
+          },
+        },
+        arrow: {
+          sx: {
+            color: '#353131',
+          },
+        },
+      }}
+    >
+      <div className="content-stretch flex gap-[8px] items-start relative shrink-0 w-full cursor-help">
+        {[1, 2, 3, 4, 5].map((bar) => (
+          <div
+            key={bar}
+            className={`basis-0 ${
+              bar <= filledBars ? 'bg-[#ff671f]' : 'bg-[#d9d9d9]'
+            } grow h-[8px] min-h-px min-w-px rounded-[70px] shrink-0 transition-all hover:opacity-80`}
+          />
+        ))}
+      </div>
+    </Tooltip>
   );
 }
 
@@ -173,13 +230,13 @@ export function RiskCard({
     
     // Dashboard - Covered risks
     if (isDashboard && isCoveredRisk) {
-      return { label: 'Prämie', value: `${risk.premium.toLocaleString("de-DE")} €` };
+      return { label: 'Belohnung', value: `${risk.premium.toLocaleString("de-DE")} €` };
     }
     
     // Marketplace
     if (risk.recommendedPriceRange) {
       return { 
-        label: 'Prämie', 
+        label: 'Mögl. Belohnung', 
         value: `${risk.recommendedPriceRange.min} - ${risk.recommendedPriceRange.max} €` 
       };
     }
@@ -264,7 +321,7 @@ export function RiskCard({
 
   return (
     <div 
-      className="bg-[#fdfcfc] box-border content-stretch flex flex-col items-start justify-between pb-[24px] pt-[32px] px-[24px] relative rounded-[16px] group transition-all h-full w-full"
+      className="bg-[#fdfcfc] box-border content-stretch flex flex-col items-start justify-between pb-[24px] pt-[32px] px-[24px] relative rounded-[16px] group transition-all w-full"
       onMouseEnter={(e) => {
         const borderEl = e.currentTarget.querySelector('[aria-hidden="true"]') as HTMLElement;
         if (borderEl) {
@@ -328,26 +385,30 @@ export function RiskCard({
           </div>
 
           {/* User Info - 8px from Title above (via parent gap-[8px]) */}
-          {showUser && (
-            <div className="content-stretch flex gap-[8px] items-center relative shrink-0">
-              <div className="relative shrink-0 size-[24px] rounded-full overflow-hidden">
-                {userDisplay.avatar ? (
-                  <img 
-                    src={userDisplay.avatar} 
-                    alt={userDisplay.name}
-                    className="block size-full object-cover"
-                  />
-                ) : (
-                  <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" fill="#D9D9D9" r="12" />
-                  </svg>
-                )}
+          {showUser && (() => {
+            const user = getUserById(risk.createdByUserId);
+            return (
+              <div className="content-stretch flex gap-[8px] items-center relative shrink-0">
+                <div className="relative shrink-0 size-[24px] rounded-full overflow-hidden">
+                  {userDisplay.avatar ? (
+                    <img 
+                      src={userDisplay.avatar} 
+                      alt={userDisplay.name}
+                      className="block size-full object-cover"
+                    />
+                  ) : (
+                    <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" fill="#D9D9D9" r="12" />
+                    </svg>
+                  )}
+                </div>
+                <div className="content-stretch flex font-['Inter:Regular',sans-serif] font-normal gap-[4px] items-center leading-[18px] not-italic relative shrink-0 text-[#4f4a4a] text-[12px] text-nowrap whitespace-pre">
+                  <p className="relative shrink-0">{userDisplay.name}</p>
+                  {user && <RatingStars count={user.stars} />}
+                </div>
               </div>
-              <div className="content-stretch flex font-['Inter:Regular',sans-serif] font-normal gap-[4px] items-center leading-[18px] not-italic relative shrink-0 text-[#4f4a4a] text-[12px] text-nowrap whitespace-pre">
-                <p className="relative shrink-0">{userDisplay.name}</p>
-              </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Value/Premium and Duration - 24px from above block (via parent gap-[24px]) */}
@@ -370,7 +431,7 @@ export function RiskCard({
           {/* Duration */}
           <div className="basis-0 content-stretch flex flex-col gap-[8px] grow items-start min-h-px min-w-px relative shrink-0">
             <p className="font-['Inter:Regular',sans-serif] font-normal leading-[18px] not-italic relative shrink-0 text-[#4f4a4a] text-[12px] w-full">
-              Laufzeit
+              Wie lange
             </p>
             <div className="content-stretch flex gap-[8px] h-[21px] items-center relative shrink-0 w-full">
               {showCalendarIcon && <CalendarIcon />}

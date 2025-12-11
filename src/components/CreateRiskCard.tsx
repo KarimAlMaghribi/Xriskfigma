@@ -11,8 +11,6 @@ export function CreateRiskCard({ onClick }: CreateRiskCardProps) {
       onClick={onClick}
       sx={{
         width: "100%",
-        height: "100%",
-        minHeight: 360,
         border: "2px dashed rgba(255, 103, 31, 0.3)",
         borderRadius: 3,
         display: "flex",

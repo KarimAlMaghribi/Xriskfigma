@@ -1,3 +1,4 @@
+import { Star } from "lucide-react";
 import { useState } from "react";
 import {
   Avatar,
@@ -54,25 +55,26 @@ export function UserMenu({ onLogout, variant = "sidebar", onNavigate }: UserMenu
             sx={{ width: 32, height: 32 }}
           />
           <Box sx={{ display: { xs: "none", sm: "block" } }}>
-            <Box
-              sx={{
-                fontFamily: "'Inter', sans-serif",
-                fontWeight: 600,
-                fontSize: "14px",
-                color: "#353131",
-              }}
-            >
+            <Box className="body-sm-medium text-primary">
               {currentUser.firstName} {currentUser.lastName}
             </Box>
-            <Box
+            <Box className="body-xs text-secondary"
               sx={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "11px",
-                color: "#4f4a4a",
                 lineHeight: 1.2,
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
               }}
             >
-              Vertrauensscore: {currentUser.score} / 100
+              {Array.from({ length: currentUser.stars }).map((_, i) => (
+                <Star
+                  key={i}
+                  size={12}
+                  fill="#ff671f"
+                  strokeWidth={0}
+                  style={{ color: "#ff671f" }}
+                />
+              ))}
             </Box>
           </Box>
           {userMenuOpen ? (
@@ -266,7 +268,19 @@ export function UserMenu({ onLogout, variant = "sidebar", onNavigate }: UserMenu
           </ListItemIcon>
           <ListItemText
             primary={`${currentUser.firstName} ${currentUser.lastName}`}
-            secondary={`Vertrauensscore: ${currentUser.score} / 100`}
+            secondary={
+              <Box sx={{ display: "flex", alignItems: "center", gap: "4px", mt: 0.5 }}>
+                {Array.from({ length: currentUser.stars }).map((_, i) => (
+                  <Star
+                    key={i}
+                    size={12}
+                    fill="#ff671f"
+                    strokeWidth={0}
+                    style={{ color: "#ff671f" }}
+                  />
+                ))}
+              </Box>
+            }
             primaryTypographyProps={{
               className: "text-lg-semibold text-secondary",
             }}

@@ -23,22 +23,35 @@ export function ImpressumPage({ onNavigateBack, onNavigate }: ImpressumPageProps
             <h1 className="display-large text-primary mb-8">Impressum</h1>
 
             <div className="flex flex-col gap-8">
-              {/* Angaben gemäß § 5 TMG */}
+              {/* Angaben gemäß Schweizer Recht */}
               <section>
-                <h2 className="heading-2 text-primary mb-4">Angaben gemäß § 5 TMG</h2>
+                <h2 className="heading-2 text-primary mb-4">Angaben gemäß Schweizer Obligationenrecht</h2>
                 <div className="body-base text-primary space-y-2">
-                  <p><strong>xRisk GmbH</strong></p>
-                  <p>Musterstraße 123</p>
-                  <p>10115 Berlin</p>
-                  <p>Deutschland</p>
+                  <p><strong>xrisk Schweiz AG</strong></p>
+                  <p>Austrasse 7</p>
+                  <p>9055 Bühler</p>
+                  <p>Schweiz</p>
                 </div>
               </section>
 
-              {/* Vertreten durch */}
+              {/* Handelsregister */}
               <section>
-                <h2 className="heading-2 text-primary mb-4">Vertreten durch</h2>
+                <h2 className="heading-2 text-primary mb-4">Handelsregister</h2>
                 <div className="body-base text-primary space-y-2">
-                  <p>Geschäftsführer: Max Mustermann, Lisa Musterfrau</p>
+                  <p>UID: CHE 206.630.672</p>
+                  <p>CH-ID: CH-300-3021538-6</p>
+                  <p>EHRA-ID: 1691920</p>
+                </div>
+              </section>
+
+              {/* Verwaltungsrat */}
+              <section>
+                <h2 className="heading-2 text-primary mb-4">Verwaltungsrat</h2>
+                <div className="body-base text-primary space-y-2">
+                  <p><strong>Prof. Dr. Gottfried Koch</strong> – Präsident und Delegierter des Verwaltungsrates</p>
+                  <p>Dr. Marco Peisiker</p>
+                  <p>Bosco Graf Wolff Metternich</p>
+                  <p>Raphael Koch</p>
                 </div>
               </section>
 
@@ -46,52 +59,8 @@ export function ImpressumPage({ onNavigateBack, onNavigate }: ImpressumPageProps
               <section>
                 <h2 className="heading-2 text-primary mb-4">Kontakt</h2>
                 <div className="body-base text-primary space-y-2">
-                  <p>Telefon: +49 (0) 30 1234567</p>
-                  <p>E-Mail: hello@xrisk.com</p>
-                </div>
-              </section>
-
-              {/* Registereintrag */}
-              <section>
-                <h2 className="heading-2 text-primary mb-4">Registereintrag</h2>
-                <div className="body-base text-primary space-y-2">
-                  <p>Eintragung im Handelsregister</p>
-                  <p>Registergericht: Amtsgericht Berlin-Charlottenburg</p>
-                  <p>Registernummer: HRB 123456 B</p>
-                </div>
-              </section>
-
-              {/* Umsatzsteuer-ID */}
-              <section>
-                <h2 className="heading-2 text-primary mb-4">Umsatzsteuer-ID</h2>
-                <div className="body-base text-primary space-y-2">
-                  <p>Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:</p>
-                  <p>DE123456789</p>
-                </div>
-              </section>
-
-              {/* Aufsichtsbehörde */}
-              <section>
-                <h2 className="heading-2 text-primary mb-4">Aufsichtsbehörde</h2>
-                <div className="body-base text-primary space-y-2">
-                  <p><strong>Deutschland:</strong></p>
-                  <p>Bundesanstalt für Finanzdienstleistungsaufsicht (BaFin)</p>
-                  <p>Graurheindorfer Straße 108</p>
-                  <p>53117 Bonn</p>
-                  <p className="mt-4"><strong>Schweiz:</strong></p>
-                  <p>Eidgenössische Finanzmarktaufsicht (FINMA)</p>
-                  <p>Laupenstrasse 27</p>
-                  <p>3003 Bern</p>
-                </div>
-              </section>
-
-              {/* Verantwortlich für den Inhalt */}
-              <section>
-                <h2 className="heading-2 text-primary mb-4">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
-                <div className="body-base text-primary space-y-2">
-                  <p>Max Mustermann</p>
-                  <p>Musterstraße 123</p>
-                  <p>10115 Berlin</p>
+                  <p>Telefon: <a href="tel:+41787999968" className="text-[#ff671f] hover:underline">+41 78 79 99 968</a></p>
+                  <p>E-Mail: <a href="mailto:info@xrisk.info" className="text-[#ff671f] hover:underline">info@xrisk.info</a></p>
                 </div>
               </section>
 

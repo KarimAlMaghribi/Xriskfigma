@@ -21,6 +21,8 @@ export interface Risk {
   coverageAmount: number;
   premium: number;
   duration: number; // in days
+  startDate?: Date; // Insurance start date
+  endDate?: Date; // Insurance end date
   status: RiskStatus;
   createdBy: string;
   createdByUserId: string; // User ID reference

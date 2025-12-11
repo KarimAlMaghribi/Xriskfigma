@@ -2,8 +2,6 @@ import { useState } from "react";
 import { Box, Typography, Paper, Divider, Chip, Button, TextField, IconButton } from "@mui/material";
 import { RiskCard } from "./RiskCard";
 import { RiskCardList } from "./RiskCardList";
-import { ChatBubble } from "./ChatBubble";
-import { OfferMessageCard } from "./OfferMessageCard";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { BaseModal } from "./BaseModal";
 import { StatusBadge, CustomBadge } from "./StatusBadge";
@@ -224,6 +222,38 @@ export function DesignSystem() {
               <Box sx={{ p: 2, bgcolor: "#f3f2f2", borderRadius: 1 }}>
                 <Chip label=".text-brand" size="small" sx={{ mb: 1 }} />
                 <p className="text-brand">Brand Text - #ff671f</p>
+              </Box>
+            </Box>
+          </Box>
+
+          <Divider />
+
+          <Box>
+            <Typography className="label" sx={{ mb: 2 }}>Hintergrund Farben</Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 2 }}>
+              <Box sx={{ p: 3, bgcolor: "#ffffff", border: "1px solid #e6e5e5", borderRadius: 1, textAlign: "center" }}>
+                <Typography sx={{ color: "#353131" }}>White Background</Typography>
+                <Typography sx={{ color: "#353131", fontSize: "12px" }}>#ffffff</Typography>
+              </Box>
+              <Box sx={{ p: 3, bgcolor: "#fdfcfc", border: "1px solid #e6e5e5", borderRadius: 1, textAlign: "center" }}>
+                <Typography sx={{ color: "#353131" }}>Paper/Canvas</Typography>
+                <Typography sx={{ color: "#353131", fontSize: "12px" }}>#fdfcfc</Typography>
+              </Box>
+              <Box sx={{ p: 3, bgcolor: "#fafafa", border: "1px solid #e6e5e5", borderRadius: 1, textAlign: "center" }}>
+                <Typography sx={{ color: "#353131" }}>Light Gray (Sidebar Card)</Typography>
+                <Typography sx={{ color: "#353131", fontSize: "12px" }}>#fafafa</Typography>
+              </Box>
+              <Box sx={{ p: 3, bgcolor: "#f8f8f8", border: "1px solid #e6e5e5", borderRadius: 1, textAlign: "center" }}>
+                <Typography sx={{ color: "#353131" }}>Dashboard Background</Typography>
+                <Typography sx={{ color: "#353131", fontSize: "12px" }}>#f8f8f8</Typography>
+              </Box>
+              <Box sx={{ p: 3, bgcolor: "#f3f2f2", border: "1px solid #e6e5e5", borderRadius: 1, textAlign: "center" }}>
+                <Typography sx={{ color: "#353131" }}>Input/Box Gray</Typography>
+                <Typography sx={{ color: "#353131", fontSize: "12px" }}>#f3f2f2</Typography>
+              </Box>
+              <Box sx={{ p: 3, bgcolor: "#e6e5e5", border: "1px solid #e6e5e5", borderRadius: 1, textAlign: "center" }}>
+                <Typography sx={{ color: "#353131" }}>Border/Divider</Typography>
+                <Typography sx={{ color: "#353131", fontSize: "12px" }}>#e6e5e5</Typography>
               </Box>
             </Box>
           </Box>
@@ -598,7 +628,7 @@ export function DesignSystem() {
         </h2>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <Box>
+          {/* <Box>
             <Typography className="label" sx={{ mb: 2 }}>Chat Bubble - Beispiel 1</Typography>
             <ChatBubble 
               text="Mein E-Bike geht auf eine 2-wöchige Alpenüberquerung"
@@ -620,7 +650,7 @@ export function DesignSystem() {
             />
           </Box>
 
-          <Divider />
+          <Divider /> */}
 
           <Box>
             <Typography className="label" sx={{ mb: 2 }}>Message Bubble - Standard</Typography>
@@ -679,7 +709,7 @@ export function DesignSystem() {
 
           <Divider />
 
-          <Box>
+          {/* <Box>
             <Typography className="label" sx={{ mb: 2 }}>Offer Message Card - Pending</Typography>
             <OfferMessageCard
               offer={sampleOffer}
@@ -717,7 +747,7 @@ export function DesignSystem() {
               onReject={() => {}}
               onViewDetails={() => {}}
             />
-          </Box>
+          </Box> */}
         </Box>
       </Paper>
 

@@ -16,11 +16,24 @@ export function LandingFooter({ onNavigate }: LandingFooterProps) {
               alt="XRISK Logo" 
               className="h-[64px] w-auto" 
             />
+            <div className="flex flex-col gap-2">
+              <p className="body-sm text-white">
+                <strong>xrisk Schweiz AG</strong>
+              </p>
+              <p className="body-sm text-white opacity-80">
+                Austrasse 7<br />
+                9055 Bühler<br />
+                Schweiz
+              </p>
+              <p className="body-sm text-white opacity-80 mt-2">
+                UID: CHE 206.630.672
+              </p>
+            </div>
           </div>
           
           {/* Navigation Links - 6 cols on mobile (half width), 4 cols on tablet/desktop */}
           <div className="col-span-6 md:col-span-4 flex flex-col gap-4">
-            <p className="font-semibold text-white text-[14px] uppercase tracking-wide opacity-80 mb-2">
+            <p className="button-text-sm text-white uppercase tracking-wide opacity-80 mb-2">
               Rechtliches
             </p>
             {["Impressum", "Datenschutz", "AGB"].map((item) => (
@@ -45,14 +58,20 @@ export function LandingFooter({ onNavigate }: LandingFooterProps) {
           
           {/* Contact Column - 6 cols on mobile (half width), 4 cols on tablet/desktop */}
           <div className="col-span-6 md:col-span-4 flex flex-col gap-4">
-            <p className="font-semibold text-white text-[14px] uppercase tracking-wide opacity-80 mb-2">
+            <p className="button-text-sm text-white uppercase tracking-wide opacity-80 mb-2">
               Kontakt
             </p>
             <a 
-              href="mailto:hello@xrisk.com" 
-              className="body-base text-white cursor-pointer hover:opacity-70 transition-opacity"
+              href="tel:+41787999968" 
+              className="body-sm text-white cursor-pointer hover:opacity-70 transition-opacity"
             >
-              hello@xrisk.com
+              +41 78 79 99 968
+            </a>
+            <a 
+              href="mailto:info@xrisk.info" 
+              className="body-sm text-white cursor-pointer hover:opacity-70 transition-opacity"
+            >
+              info@xrisk.info
             </a>
             <div className="flex gap-4 mt-4">
               <a 
@@ -78,7 +97,7 @@ export function LandingFooter({ onNavigate }: LandingFooterProps) {
           
           {/* Copyright */}
           <div className="col-span-12 mt-12 pt-8 border-t border-white/20">
-            <p className="text-white text-[14px] opacity-60 text-center md:text-left">
+            <p className="body-sm text-white opacity-60 text-center md:text-left">
               © 2025 xRisk. Alle Rechte vorbehalten.
             </p>
           </div>

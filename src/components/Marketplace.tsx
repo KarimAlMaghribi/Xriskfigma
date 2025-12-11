@@ -208,28 +208,19 @@ export function Marketplace({ onRiskDetails, onTakeRisk }: MarketplaceProps) {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 3, md: 4 } }}>
       {/* Header */}
       <Box>
-        <Typography
-          variant="h4"
-          sx={{
-            fontFamily: "'Inter', sans-serif",
-            fontWeight: 900,
-            fontSize: "32px",
-            color: "#353131",
-            mb: 2,
-          }}
-        >
-          Risikobörse
-        </Typography>
-        <Typography className="body-base text-primary">
-          Übernehmen Sie Risiken und verdienen Sie Prämien
-        </Typography>
+        <h1 className="heading-1" style={{ marginBottom: "4px" }}>
+          Marktplatz
+        </h1>
+        <p className="body-sm text-secondary">
+          Finde Anliegen und verdiene mit deinem Wissen
+        </p>
       </Box>
 
       {/* Search Bar */}
-      <Box sx={{ mt: 1 }}>
+      <Box sx={{ mt: { xs: 0, md: 1 } }}>
         <MarketplaceSearchBar
           risks={communityRisks.filter((r) => r.status === "pending")}
           onSearch={handleSearch}
@@ -247,30 +238,33 @@ export function Marketplace({ onRiskDetails, onTakeRisk }: MarketplaceProps) {
       </Box>
 
       {/* Marketplace Filter Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: "#e6e5e5" }}>
+      <Box sx={{ borderBottom: 1, borderColor: "#e6e5e5", mx: { xs: -2, md: 0 } }}>
         <Tabs
           value={marketplaceFilter}
           onChange={handleMarketplaceFilterChange}
+          variant="scrollable"
+          scrollButtons="auto"
           sx={{
             "& .MuiTabs-indicator": {
               backgroundColor: "#ff671f",
               height: 2,
             },
+            px: { xs: 2, md: 0 },
           }}
         >
           <Tab
             label={`Alle (${allRisksCount})`}
             value="all"
-            icon={<PublicIcon sx={{ fontSize: 18 }} />}
+            icon={<PublicIcon sx={{ fontSize: { xs: 16, md: 18 } }} />}
             iconPosition="start"
             sx={{
-              minHeight: 48,
+              minHeight: { xs: 44, md: 48 },
               textTransform: "none",
               fontFamily: "'Inter', sans-serif",
-              fontSize: "14px",
+              fontSize: { xs: "13px", md: "14px" },
               fontWeight: 400,
               color: "#9e9e9e",
-              px: 2,
+              px: { xs: 1.5, md: 2 },
               "&.Mui-selected": {
                 color: "#ff671f",
                 fontWeight: 500,
@@ -283,16 +277,16 @@ export function Marketplace({ onRiskDetails, onTakeRisk }: MarketplaceProps) {
           <Tab
             label={`Eigene (${ownRisksCount})`}
             value="own"
-            icon={<PersonIcon sx={{ fontSize: 18 }} />}
+            icon={<PersonIcon sx={{ fontSize: { xs: 16, md: 18 } }} />}
             iconPosition="start"
             sx={{
-              minHeight: 48,
+              minHeight: { xs: 44, md: 48 },
               textTransform: "none",
               fontFamily: "'Inter', sans-serif",
-              fontSize: "14px",
+              fontSize: { xs: "13px", md: "14px" },
               fontWeight: 400,
               color: "#9e9e9e",
-              px: 2,
+              px: { xs: 1.5, md: 2 },
               "&.Mui-selected": {
                 color: "#ff671f",
                 fontWeight: 500,
@@ -305,16 +299,16 @@ export function Marketplace({ onRiskDetails, onTakeRisk }: MarketplaceProps) {
           <Tab
             label={`Favoriten (${favoritesCount})`}
             value="favorites"
-            icon={<StarIcon sx={{ fontSize: 18 }} />}
+            icon={<StarIcon sx={{ fontSize: { xs: 16, md: 18 } }} />}
             iconPosition="start"
             sx={{
-              minHeight: 48,
+              minHeight: { xs: 44, md: 48 },
               textTransform: "none",
               fontFamily: "'Inter', sans-serif",
-              fontSize: "14px",
+              fontSize: { xs: "13px", md: "14px" },
               fontWeight: 400,
               color: "#9e9e9e",
-              px: 2,
+              px: { xs: 1.5, md: 2 },
               "&.Mui-selected": {
                 color: "#ff671f",
                 fontWeight: 500,
@@ -392,10 +386,10 @@ export function Marketplace({ onRiskDetails, onTakeRisk }: MarketplaceProps) {
         >
           <Typography className="body-sm text-secondary">
             {marketplaceFilter === "own"
-              ? "Sie haben noch keine eigenen Risiken erstellt."
+              ? "Du hast noch keine eigenen Anliegen erstellt."
               : marketplaceFilter === "favorites"
-              ? "Sie haben noch keine Favoriten gespeichert."
-              : "Keine Risiken gefunden. Passen Sie die Filter an."}
+              ? "Du hast noch keine Favoriten gespeichert."
+              : "Keine Anliegen gefunden. Passe die Filter an."}
           </Typography>
         </Box>
       ) : (

@@ -181,11 +181,11 @@ export function LandingPage({ onLogin, isLoggedIn = false, onNavigate }: Landing
                     
                     {/* Text Content - Desktop: Left aligned, Mobile: Center aligned */}
                     <div className="content-stretch flex flex-col md:gap-[24px] gap-[16px] items-start justify-center relative shrink-0 md:w-[630px] w-full z-[3]">
-                      <div className="content-stretch flex flex-col gap-[10px] items-start not-italic relative shrink-0 text-[#e6e5e5] w-full">
-                        <p className="[text-shadow:#000000_10px_5px_40px] font-['Inter:Black',sans-serif] font-black leading-[1.3] relative shrink-0 md:text-[52px] text-[32px] w-full transition-all duration-500">
+                      <div className="content-stretch flex flex-col gap-[10px] items-start not-italic relative shrink-0 text-inverse w-full">
+                        <p className="[text-shadow:#000000_10px_5px_40px] display-hero md:text-[52px] text-[32px] relative shrink-0 w-full transition-all duration-500 text-inverse">
                           {currentVariant.headline}
                         </p>
-                        <p className="[text-shadow:#000000_10px_5px_40px] font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[1.5] relative shrink-0 text-[18px] w-full transition-all duration-500">
+                        <p className="[text-shadow:#000000_10px_5px_40px] text-lg-semibold relative shrink-0 w-full transition-all duration-500 text-inverse">
                           {currentVariant.subheadline}
                         </p>
                       </div>
@@ -274,7 +274,7 @@ export function LandingPage({ onLogin, isLoggedIn = false, onNavigate }: Landing
                     {currentVariant.processTitle}
                   </h2>
                 </div>
-                <p className="font-semibold text-primary text-[18px] leading-[1.5]">
+                <p className="text-lg-semibold text-primary">
                   {currentVariant.processSubtitle}
                 </p>
               </div>
@@ -508,11 +508,24 @@ export function LandingPage({ onLogin, isLoggedIn = false, onNavigate }: Landing
                 alt="XRISK Logo" 
                 className="h-[64px] w-auto" 
               />
+              <div className="flex flex-col gap-2">
+                <p className="body-sm text-white">
+                  <strong>xrisk Schweiz AG</strong>
+                </p>
+                <p className="body-sm text-white opacity-80">
+                  Austrasse 7<br />
+                  9055 Bühler<br />
+                  Schweiz
+                </p>
+                <p className="body-sm text-white opacity-80 mt-2">
+                  UID: CHE 206.630.672
+                </p>
+              </div>
             </div>
             
             {/* Navigation Links */}
             <div className="col-span-6 md:col-span-4 flex flex-col gap-4">
-              <p className="font-semibold text-white text-[14px] uppercase tracking-wide opacity-80 mb-2">
+              <p className="button-text-sm text-white uppercase tracking-wide opacity-80 mb-2">
                 Rechtliches
               </p>
               {["Impressum", "Datenschutz", "AGB"].map((item) => (
@@ -536,14 +549,20 @@ export function LandingPage({ onLogin, isLoggedIn = false, onNavigate }: Landing
             
             {/* Contact Column */}
             <div className="col-span-6 md:col-span-4 flex flex-col gap-4">
-              <p className="font-semibold text-white text-[14px] uppercase tracking-wide opacity-80 mb-2">
+              <p className="button-text-sm text-white uppercase tracking-wide opacity-80 mb-2">
                 Kontakt
               </p>
               <a 
-                href="mailto:hello@xrisk.com" 
-                className="body-base text-white cursor-pointer hover:opacity-70 transition-opacity"
+                href="tel:+41787999968" 
+                className="body-sm text-white cursor-pointer hover:opacity-70 transition-opacity"
               >
-                hello@xrisk.com
+                +41 78 79 99 968
+              </a>
+              <a 
+                href="mailto:info@xrisk.info" 
+                className="body-sm text-white cursor-pointer hover:opacity-70 transition-opacity"
+              >
+                info@xrisk.info
               </a>
               <div className="flex gap-4 mt-4">
                 <a 
@@ -569,7 +588,7 @@ export function LandingPage({ onLogin, isLoggedIn = false, onNavigate }: Landing
             
             {/* Copyright */}
             <div className="col-span-12 mt-12 pt-8 border-t border-white/20">
-              <p className="text-white text-[14px] opacity-60 text-center md:text-left">
+              <p className="body-sm text-white opacity-60 text-center md:text-left">
                 © 2025 xRisk. Alle Rechte vorbehalten.
               </p>
             </div>

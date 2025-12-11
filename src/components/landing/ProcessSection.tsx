@@ -78,6 +78,7 @@ export function ProcessSection({ title, subtitle, steps, image }: ProcessSection
                   alt=""
                   className="absolute inset-0 max-w-none object-cover rounded-[24px] w-full h-full"
                   src={image}
+                  style={{ filter: 'blur(120px)' }}
                 />
               </div>
             </div>
