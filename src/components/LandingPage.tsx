@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../auth/AuthContext";
 import svgPaths from "../imports/svg-81dejan7f8";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import imgHeroMarketDesktop from "figma:asset/fea06be5cea92d665177a3b32ba42a925e4a88c3.png";
@@ -22,18 +23,17 @@ import { LandingButton } from "./landing/LandingButton";
 
 // Landing Page Component
 interface LandingPageProps {
-  onLogin: () => void;
-  isLoggedIn?: boolean;
   onNavigate?: (page: string) => void;
 }
 
-export function LandingPage({ onLogin, isLoggedIn = false, onNavigate }: LandingPageProps) {
+export function LandingPage({ onNavigate }: LandingPageProps) {
   const [activeSection, setActiveSection] = useState("hero");
   const [riskInput, setRiskInput] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [variant, setVariant] = useState<VariantType>("market");
   const [showStickyCTA, setShowStickyCTA] = useState(false);
   const [currentPage, setCurrentPage] = useState("");
+  const { isLoggedIn, login } = useAuth();
 
   // Variant configurations
   const variants = {
@@ -150,7 +150,9 @@ export function LandingPage({ onLogin, isLoggedIn = false, onNavigate }: Landing
         activeSection={activeSection}
         scrollToSection={scrollToSection}
         isLoggedIn={isLoggedIn}
-        onLogin={onLogin}
+        onLogin={() => {
+          void login();
+        }}
       />
 
       {/* Persistent Case Switcher */}
@@ -483,10 +485,10 @@ export function LandingPage({ onLogin, isLoggedIn = false, onNavigate }: Landing
                   <li><strong>Mutig</strong> – neue Wege für neue Generationen.</li>
                 </ul>
                 <div style={{ display: 'flex', gap: '16px', marginTop: '24px', flexWrap: 'wrap' }}>
-                  <LandingButton onClick={onLogin}>
+                  <LandingButton onClick={login}>
                     Jetzt registrieren
                   </LandingButton>
-                  <LandingButton onClick={onLogin} variant="outline">
+                  <LandingButton onClick={login} variant="outline">
                     Beta-Version testen
                   </LandingButton>
                 </div>
@@ -630,12 +632,10 @@ export function LandingPage({ onLogin, isLoggedIn = false, onNavigate }: Landing
       )}
 
       {/* Risk Input Modal */}
-      <RiskInputModal 
+      <RiskInputModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialRiskDescription={riskInput}
-        isLoggedIn={isLoggedIn}
-        onLogin={onLogin}
       />
     </div>
   );

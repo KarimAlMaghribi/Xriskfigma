@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { useAuth } from "./auth/AuthContext";
 import { Dashboard } from "./components/Dashboard";
 import { Marketplace } from "./components/Marketplace";
 import { DesignSystem } from "./components/DesignSystem";
 import { LandingPage } from "./components/LandingPage";
 import { RisktakerLandingPage } from "./components/RisktakerLandingPage";
 import { RiskInputModal } from "./components/RiskInputModal";
-import { Sidebar } from "./components/Sidebar";
+import { Sidebar } from "./components/ui/sidebar";
 import { Messages } from "./components/Messages";
 import { AccountSettings } from "./components/AccountSettings";
 import { TakeRiskModal } from "./components/TakeRiskModal";
@@ -171,7 +172,6 @@ const theme = createTheme({
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>("home");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [userType, setUserType] = useState<"risikogeber" | "risikonehmer">("risikogeber");
   const [newRisks, setNewRisks] = useState<Risk[]>([]);
   const [riskModalOpen, setRiskModalOpen] = useState(false);
@@ -181,6 +181,7 @@ export default function App() {
   const [riskDetailContext, setRiskDetailContext] = useState<'marketplace' | 'own' | 'taken'>('marketplace');
   const [userProfileDialogOpen, setUserProfileDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const { isLoggedIn, logout } = useAuth();
   
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
@@ -189,12 +190,8 @@ export default function App() {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-  };
-
   const handleLogout = () => {
-    setIsLoggedIn(false);
+    logout();
     setCurrentPage("home");
   };
 
@@ -203,13 +200,31 @@ export default function App() {
   };
 
   const handleRiskCreated = (risk: Risk) => {
-    setNewRisks((prev) => [risk, ...prev]);
-    setCurrentPage("home");
-    setRiskModalOpen(false);
+    setNewRisks((prev) => {
+      const existingIndex = prev.findIndex((item) => item.id === risk.id);
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = { ...prev[existingIndex], ...risk };
+        return updated;
+      }
 
-    toast.success(`Risiko "${risk.title}" wurde angelegt`, {
-      description: "Die Riskoanalyse läuft gerade noch im Hintergrund.",
-      duration: 5000,
+      return [risk, ...prev];
+    });
+    setCurrentPage("home");
+
+    if (risk.status === "completed") {
+      setRiskModalOpen(false);
+
+      toast.success(`Analyse für "${risk.title}" abgeschlossen`, {
+        description: "Das Risiko wurde erfolgreich angelegt.",
+        duration: 5000,
+      });
+      return;
+    }
+
+    toast.info(`Analyse für "${risk.title}" gestartet`, {
+      description: "Wir verarbeiten dein Anliegen gerade.",
+      duration: 4000,
     });
   };
 
@@ -328,15 +343,12 @@ export default function App() {
       <ThemeProvider theme={theme}>
         {userType === "risikogeber" ? (
           <LandingPage
-            onLogin={handleLogin}
-            onUserTypeChange={handleUserTypeChange}
             onNavigate={(page) => {
               setCurrentPage(page as Page);
             }}
           />
         ) : (
           <RisktakerLandingPage
-            onLogin={handleLogin}
             onUserTypeChange={handleUserTypeChange}
           />
         )}
@@ -553,8 +565,6 @@ export default function App() {
         onClose={() => setRiskModalOpen(false)}
         initialRiskDescription=""
         onRiskCreated={handleRiskCreated}
-        isLoggedIn={isLoggedIn}
-        onLogin={handleLogin}
       />
 
       {/* Take Risk Modal */}

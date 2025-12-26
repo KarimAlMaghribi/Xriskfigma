@@ -1,33 +1,46 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Box,
-  Typography,
-  TextField,
-  Button,
   Avatar,
+  Box,
+  Button,
+  Chip,
+  Divider,
   LinearProgress,
-  Fade,
-  Grow,
+  Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
-import { Wand2, Sparkles, FileText, CheckCircle2, Search, BarChart3, TrendingUp, Zap } from "lucide-react";
-import { Risk } from "../types/risk";
+import { CheckCircle2, FileText, Search, Sparkles, Wand2 } from "lucide-react";
+import { Risk, RiskStatus } from "../types/risk";
 import { BaseModal } from "./BaseModal";
 import { AuthModal } from "./AuthModal";
+import { useAuth } from "../auth/AuthContext";
+import {
+  openResumeStream,
+  openStream,
+  startWorkflow,
+  submitInquiries,
+} from "../workflow/workflowClient";
+import { Inquiry, WorkflowEvent, WorkflowStartPayload } from "../workflow/workflowTypes";
 
 interface RiskInputModalProps {
   open: boolean;
   onClose: () => void;
   initialRiskDescription: string;
   onRiskCreated?: (risk: Risk) => void;
-  isLoggedIn: boolean;
-  onLogin: () => void;
 }
 
-// Helper function to extract key items from risk description
+type Step = "input" | "loading" | "questions" | "auth";
+
+const loadingPhases = [
+  { title: "Verbunden", icon: <Sparkles size={16} /> },
+  { title: "Klassifizierung", icon: <Search size={16} /> },
+  { title: "Rückfragen", icon: <FileText size={16} /> },
+];
+
 function getItemFromDescription(description: string): string {
   const lower = description.toLowerCase();
-  
-  // Common items
+
   if (lower.includes("espresso") || lower.includes("kaffee")) return "Espressomaschine";
   if (lower.includes("drohne")) return "Drohne";
   if (lower.includes("bohrmaschine") || lower.includes("bohrer")) return "Bohrmaschine";
@@ -39,305 +52,340 @@ function getItemFromDescription(description: string): string {
   if (lower.includes("mixer") || lower.includes("küche")) return "Küchengerät";
   if (lower.includes("rasenmäher")) return "Rasenmäher";
   if (lower.includes("akkuschrauber")) return "Akkuschrauber";
-  
+
   return "Gerät";
 }
 
-function getLoadingMessages(item: string): string[] {
-  return [
-    `Wow, eine ${item}! 😊`,
-    `Ich analysiere die Details Ihrer ${item}...`,
-    `Spannend! Ich schaue mir das genauer an...`,
-    `Einen Moment, ich bewerte das Risiko für Ihre ${item}...`,
-    `Ich prüfe die technischen Spezifikationen...`,
-    `Fast geschafft! Ich prüfe noch ein paar Details...`,
-    `Ich ermittle passende Risikofaktoren...`,
-    `Gleich fertig mit der Erstanalyse...`,
-    `Ich bereite die Risikobewertung vor...`,
-    `Nur noch einen Moment...`,
-  ];
-}
-
-// Helper to determine category from description
-function getCategoryFromDescription(description: string): Risk['category'] {
+function getCategoryFromDescription(description: string): Risk["category"] {
   const lower = description.toLowerCase();
-  
+
   if (lower.includes("auto") || lower.includes("fahrzeug") || lower.includes("drohne")) return "vehicles";
   if (lower.includes("laptop") || lower.includes("computer") || lower.includes("kamera")) return "electronics";
   if (lower.includes("bohrmaschine") || lower.includes("werkzeug") || lower.includes("akkuschrauber")) return "tools";
   if (lower.includes("espresso") || lower.includes("mixer") || lower.includes("küche")) return "household";
   if (lower.includes("fahrrad") || lower.includes("ski")) return "sports";
-  
+
   return "other";
 }
 
-// Loading phases configuration based on Nielsen Norman Group best practices
-interface LoadingPhase {
-  id: number;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  duration: number; // milliseconds
-  progress: number; // 0-100
+function buildRisk(
+  riskUuid: string,
+  input: { description: string; startDate: string; endDate: string; insuranceValue: number },
+  status: RiskStatus,
+): Risk {
+  const start = new Date(input.startDate);
+  const end = new Date(input.endDate);
+  const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+  return {
+    id: riskUuid,
+    title: getItemFromDescription(input.description),
+    category: getCategoryFromDescription(input.description),
+    description: input.description,
+    coverageAmount: input.insuranceValue,
+    premium: 0,
+    duration,
+    startDate: start,
+    endDate: end,
+    status,
+    createdBy: "Sie",
+    createdByUserId: "u5",
+    createdAt: new Date(),
+    expiresAt: end,
+    userRole: "giver",
+    riskScore: 0,
+    views: 0,
+    favorites: 0,
+  };
 }
 
-export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCreated, isLoggedIn, onLogin }: RiskInputModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
+export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCreated }: RiskInputModalProps) {
+  const { login } = useAuth();
+
+  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const defaultEndDate = useMemo(() => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + 1);
+    return date.toISOString().split("T")[0];
+  }, []);
+
+  const [description, setDescription] = useState(initialRiskDescription);
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(defaultEndDate);
+  const [insuranceValue, setInsuranceValue] = useState("1000");
+  const [step, setStep] = useState<Step>("input");
+  const [taskId, setTaskId] = useState<string | undefined>();
+  const [riskUuid, setRiskUuid] = useState<string | undefined>();
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [progressLabel, setProgressLabel] = useState<string | undefined>();
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [step, setStep] = useState<"input" | "loading" | "questions" | "auth">("input");
-  const [riskDescription, setRiskDescription] = useState(initialRiskDescription);
-  const [detectedItem, setDetectedItem] = useState("Gerät");
-  const [completedPhases, setCompletedPhases] = useState<number[]>([]);
-  const [formData, setFormData] = useState({
-    description: initialRiskDescription,
-    startDate: "",
-    endDate: "",
-    insuranceValue: "1000",
-  });
-  const [pendingRisk, setPendingRisk] = useState<Risk | null>(null);
-  
-  // Define loading phases - focused on preparing follow-up questions
-  const loadingPhases: LoadingPhase[] = [
-    {
-      id: 0,
-      title: "Deine Eingaben verstehen",
-      description: "Wir schauen uns an, was Du absichern möchtest...",
-      icon: <Search size={24} />,
-      duration: 2500,
-      progress: 25,
-    },
-    {
-      id: 1,
-      title: "Kontext checken",
-      description: "Welche Art von Absicherung passt am besten?",
-      icon: <BarChart3 size={24} />,
-      duration: 2500,
-      progress: 50,
-    },
-    {
-      id: 2,
-      title: "Wichtige Infos ermitteln",
-      description: "Was brauchen wir noch von Dir?",
-      icon: <TrendingUp size={24} />,
-      duration: 2500,
-      progress: 75,
-    },
-    {
-      id: 3,
-      title: "Fragen vorbereiten",
-      description: "Gleich geht's weiter mit ein paar Details...",
-      icon: <Zap size={24} />,
-      duration: 2500,
-      progress: 100,
-    },
-  ];
+  const [completedPhases, setCompletedPhases] = useState<boolean[]>(
+    new Array(loadingPhases.length).fill(false),
+  );
+  const [error, setError] = useState<string | undefined>();
+  const [pendingAuthResponses, setPendingAuthResponses] = useState<string[] | null>(null);
+  const [initialInput, setInitialInput] = useState<WorkflowStartPayload | null>(null);
 
-  const today = new Date().toISOString().split('T')[0];
-  const oneYearLater = new Date();
-  oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-  const oneYearLaterStr = oneYearLater.toISOString().split('T')[0];
+  const streamRef = useRef<{ close: () => void } | null>(null);
+  const riskCreatedRef = useRef(false);
+  const riskCompletedRef = useRef(false);
 
-  // Manage loading phases
+  const loadingProgress = useMemo(() => {
+    const completed = completedPhases.filter(Boolean).length;
+    return Math.min(100, Math.round((completed / loadingPhases.length) * 100));
+  }, [completedPhases]);
+
+  const resetLoadingState = () => {
+    setCurrentPhaseIndex(0);
+    setCompletedPhases(new Array(loadingPhases.length).fill(false));
+    setProgressLabel(undefined);
+  };
+
+  const closeStream = () => {
+    if (streamRef.current) {
+      streamRef.current.close();
+      streamRef.current = null;
+    }
+  };
+
+  const resetAll = () => {
+    closeStream();
+    setStep("input");
+    setTaskId(undefined);
+    setRiskUuid(undefined);
+    setInquiries([]);
+    setAnswers([]);
+    setError(undefined);
+    setPendingAuthResponses(null);
+    setInitialInput(null);
+    resetLoadingState();
+    riskCreatedRef.current = false;
+    riskCompletedRef.current = false;
+  };
+
   useEffect(() => {
-    if (!isLoading || step !== "loading") {
-      setCurrentPhaseIndex(0);
-      setProgress(0);
-      setCompletedPhases([]);
+    if (open) {
+      setDescription(initialRiskDescription);
+    }
+  }, [initialRiskDescription, open]);
+
+  useEffect(() => {
+    if (!open) {
+      resetAll();
+    }
+  }, [open]);
+
+  useEffect(() => () => closeStream(), []);
+
+  const markPhaseCompletedThrough = (index: number) => {
+    setCompletedPhases((prev) => prev.map((completed, i) => completed || i <= index));
+    setCurrentPhaseIndex((prev) => Math.max(prev, Math.min(index + 1, loadingPhases.length - 1)));
+  };
+
+  const handleCompletion = () => {
+    if (riskCompletedRef.current || !initialInput || !riskUuid) return;
+
+    riskCompletedRef.current = true;
+    const completedRisk = buildRisk(riskUuid, {
+      description: initialInput.initial_prompt,
+      startDate: initialInput.start_date,
+      endDate: initialInput.end_date,
+      insuranceValue: initialInput.insurance_value,
+    }, "completed");
+    onRiskCreated?.(completedRisk);
+    markPhaseCompletedThrough(loadingPhases.length - 1);
+    setProgressLabel("Abgeschlossen");
+    closeStream();
+  };
+
+  const handleStreamEvent = (event: WorkflowEvent) => {
+    if (event.meta?.risk_uuid) {
+      setRiskUuid((prev) => prev ?? event.meta?.risk_uuid);
+    }
+
+    if (event.connected) {
+      markPhaseCompletedThrough(0);
+      setProgressLabel("Verbunden");
+    }
+
+    const stepValue = (event.meta?.step || event.status || "").toLowerCase();
+
+    if (stepValue.includes("classification")) {
+      markPhaseCompletedThrough(0);
+      setCurrentPhaseIndex(1);
+      setProgressLabel("Klassifizierung läuft");
+    }
+
+    if (stepValue === "classified") {
+      markPhaseCompletedThrough(1);
+      setProgressLabel("Klassifizierung abgeschlossen");
+    }
+
+    if (stepValue.includes("inquiry")) {
+      markPhaseCompletedThrough(1);
+      setCurrentPhaseIndex(2);
+      setProgressLabel("Rückfragen vorbereiten");
+    }
+
+    if (event.status === "inquired") {
+      markPhaseCompletedThrough(2);
+      setProgressLabel("Rückfragen verarbeitet");
+    }
+
+    if (event.status === "inquiry_required" && event.meta?.inquiries) {
+      closeStream();
+      setInquiries(event.meta.inquiries);
+      setAnswers(event.meta.inquiries.map((inquiry) => inquiry.response ?? ""));
+      markPhaseCompletedThrough(loadingPhases.length - 1);
+      setProgressLabel("Rückfragen erhalten");
+      setStep("questions");
       return;
     }
 
-    let phaseTimer: NodeJS.Timeout;
-    let progressInterval: NodeJS.Timeout;
-    
-    const runPhase = (phaseIndex: number) => {
-      if (phaseIndex >= loadingPhases.length) {
-        // All phases complete
-        setStep("questions");
-        setIsLoading(false);
+    if (event.status === "error") {
+      setError(event.error || "Workflow fehlgeschlagen.");
+      closeStream();
+      return;
+    }
+
+    const isCompletedStatus =
+      stepValue === "completed" ||
+      stepValue === "done" ||
+      stepValue === "finished" ||
+      stepValue === "report" ||
+      event.status === "completed";
+
+    if (isCompletedStatus) {
+      handleCompletion();
+    }
+  };
+
+  const handleStreamError = (err: Event | MessageEvent | Error) => {
+    console.error("Workflow stream error", err);
+    setError("Der Live-Stream wurde unerwartet beendet. Bitte versuche es erneut.");
+    closeStream();
+  };
+
+  const openInitialStream = (id: string) => {
+    closeStream();
+    streamRef.current = openStream(id, handleStreamEvent, handleStreamError);
+  };
+
+  const openResume = (uuid: string) => {
+    closeStream();
+    streamRef.current = openResumeStream(uuid, handleStreamEvent, handleStreamError);
+  };
+
+  const handleStart = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError(undefined);
+    resetLoadingState();
+
+    const payload: WorkflowStartPayload = {
+      initial_prompt: description || initialRiskDescription,
+      start_date: startDate,
+      end_date: endDate,
+      insurance_value: Number(insuranceValue) || 0,
+    };
+
+    setInitialInput(payload);
+    setStep("loading");
+
+    try {
+      const response = await startWorkflow(payload);
+      setTaskId(response.task_id);
+      setRiskUuid(response.risk_uuid);
+
+      if (!riskCreatedRef.current) {
+        const evaluatingRisk = buildRisk(
+          response.risk_uuid,
+          {
+            description: payload.initial_prompt,
+            startDate: payload.start_date,
+            endDate: payload.end_date,
+            insuranceValue: payload.insurance_value,
+          },
+          "evaluating",
+        );
+        onRiskCreated?.(evaluatingRisk);
+        riskCreatedRef.current = true;
+      }
+
+      openInitialStream(response.task_id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Fehler beim Starten des Workflows";
+      setError(message);
+      setStep("input");
+    }
+  };
+
+  const handleInquiryChange = (index: number, value: string) => {
+    setAnswers((prev) => {
+      const updated = [...prev];
+      updated[index] = value;
+      return updated;
+    });
+  };
+
+  const performSubmitInquiries = async (responses: string[]) => {
+    if (!taskId || !riskUuid) {
+      setError("Workflow-Informationen fehlen. Bitte neu starten.");
+      return;
+    }
+
+    if (!inquiries.every((_, idx) => responses[idx] && responses[idx].trim() !== "")) {
+      setError("Bitte beantworte alle Rückfragen.");
+      return;
+    }
+
+    setError(undefined);
+
+    try {
+      await submitInquiries({ task_id: taskId, risk_uuid: riskUuid, responses });
+      setStep("loading");
+      setPendingAuthResponses(null);
+      openResume(riskUuid);
+    } catch (err) {
+      if (err instanceof Error && err.message === "AUTH_REQUIRED") {
+        setPendingAuthResponses(responses);
+        setStep("auth");
         return;
       }
 
-      const phase = loadingPhases[phaseIndex];
-      const startProgress = phaseIndex === 0 ? 0 : loadingPhases[phaseIndex - 1].progress;
-      const endProgress = phase.progress;
-      const progressRange = endProgress - startProgress;
-      const updateInterval = 50; // Update every 50ms for smooth animation
-      const steps = phase.duration / updateInterval;
-      const progressIncrement = progressRange / steps;
-      
-      let currentProgress = startProgress;
-      
-      // Smooth progress animation
-      progressInterval = setInterval(() => {
-        currentProgress += progressIncrement;
-        if (currentProgress >= endProgress) {
-          currentProgress = endProgress;
-          clearInterval(progressInterval);
-        }
-        setProgress(Math.min(currentProgress, 100));
-      }, updateInterval);
-
-      // Move to next phase
-      phaseTimer = setTimeout(() => {
-        setCompletedPhases(prev => [...prev, phaseIndex]);
-        setCurrentPhaseIndex(phaseIndex + 1);
-        clearInterval(progressInterval);
-        runPhase(phaseIndex + 1);
-      }, phase.duration);
-    };
-
-    runPhase(0);
-
-    return () => {
-      clearTimeout(phaseTimer);
-      clearInterval(progressInterval);
-    };
-  }, [isLoading, step]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Get form values
-    const form = e.target as HTMLFormElement;
-    const description = (form.elements.namedItem("risk-description") as HTMLTextAreaElement)?.value || initialRiskDescription;
-    const startDate = (form.elements.namedItem("start-date") as HTMLInputElement)?.value || today;
-    const endDate = (form.elements.namedItem("end-date") as HTMLInputElement)?.value || oneYearLaterStr;
-    const insuranceValue = (form.elements.namedItem("insurance-value") as HTMLInputElement)?.value || "1000";
-    
-    setFormData({
-      description,
-      startDate,
-      endDate,
-      insuranceValue,
-    });
-    setRiskDescription(description);
-    
-    // Detect item from description
-    const item = getItemFromDescription(description);
-    setDetectedItem(item);
-    
-    setIsLoading(true);
-    setStep("loading");
-    setCurrentPhaseIndex(0);
-    setProgress(0);
-    setCompletedPhases([]);
-  };
-
-  const handleQuestionSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Create the new risk object
-    const startDate = new Date(formData.startDate);
-    const endDate = new Date(formData.endDate);
-    const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    const newRisk: Risk = {
-      id: `r-${Date.now()}`,
-      title: detectedItem,
-      category: getCategoryFromDescription(formData.description),
-      description: formData.description,
-      coverageAmount: parseInt(formData.insuranceValue),
-      premium: 0, // Will be calculated
-      duration: duration,
-      status: "evaluating",
-      createdBy: "Sie",
-      createdByUserId: "u5",
-      createdAt: new Date(),
-      expiresAt: endDate,
-      userRole: "giver",
-      riskScore: 0,
-      views: 0,
-      favorites: 0,
-    };
-    
-    // Check if user is logged in
-    if (!isLoggedIn) {
-      // Store the risk and show auth modal
-      setPendingRisk(newRisk);
-      setStep("auth");
-    } else {
-      // Call the callback immediately
-      if (onRiskCreated) {
-        onRiskCreated(newRisk);
-      }
-      
-      // Close modal and reset
-      setIsLoading(false);
-      setStep("input");
-      onClose();
+      const message = err instanceof Error ? err.message : "Fehler beim Senden der Antworten";
+      setError(message);
     }
   };
 
-  const handleAuthLogin = (_email: string, _password: string) => {
-    // Simulate login
-    onLogin();
-    
-    // Now create the risk
-    if (pendingRisk && onRiskCreated) {
-      onRiskCreated(pendingRisk);
-    }
-    
-    // Close modal and reset
-    setIsLoading(false);
-    setStep("input");
-    setPendingRisk(null);
-    onClose();
+  const handleInquirySubmit = async () => {
+    await performSubmitInquiries(answers);
   };
 
-  const handleAuthRegister = (_email: string, _password: string, _name: string) => {
-    // Simulate registration and login
-    onLogin();
-    
-    // Now create the risk
-    if (pendingRisk && onRiskCreated) {
-      onRiskCreated(pendingRisk);
-    }
-    
-    // Close modal and reset
-    setIsLoading(false);
-    setStep("input");
-    setPendingRisk(null);
-    onClose();
+  const handleAuthSuccess = async () => {
+    await login();
+    const responsesToRetry = pendingAuthResponses ?? answers;
+    await performSubmitInquiries(responsesToRetry);
   };
 
   const handleClose = () => {
-    if (!isLoading) {
-      setStep("input");
-      setIsLoading(false);
-      onClose();
-    }
+    resetAll();
+    onClose();
   };
 
-  // Render step 1: Input Form
   const renderInputForm = () => (
-    <form onSubmit={handleSubmit}>
+    <form id="risk-input-form" onSubmit={handleStart}>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        {/* Header with Step Number */}
         <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
-          <Avatar
-            sx={{
-              bgcolor: "#ff671f",
-              width: 40,
-              height: 40,
-              fontFamily: "'Inter', sans-serif",
-              fontWeight: 500,
-              fontSize: "16px",
-            }}
-          >
-            1
-          </Avatar>
+          <Avatar sx={{ bgcolor: "#ff671f", width: 40, height: 40, fontWeight: 600 }}>1</Avatar>
           <Box sx={{ flex: 1 }}>
             <Typography className="heading-3 text-primary" sx={{ mb: 0.5 }}>
               Was möchtest Du absichern?
             </Typography>
-            <Typography className="body-sm text-secondary">
-              Erzähl uns von Deinem Anliegen
-            </Typography>
+            <Typography className="body-sm text-secondary">Erzähl uns von Deinem Anliegen</Typography>
           </Box>
         </Box>
 
-        {/* Risikobeschreibung */}
         <Box>
           <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
             Dein Anliegen:
@@ -345,7 +393,8 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
           <TextField
             name="risk-description"
             id="risk-description"
-            defaultValue={initialRiskDescription}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             placeholder="z.B. Ich verleih meine Espressomaschine an meinen Nachbarn und möchte sie absichern..."
             multiline
             rows={6}
@@ -381,8 +430,7 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
           />
         </Box>
 
-        {/* Date Fields Row */}
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 2 }}>
           <Box>
             <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
               Schutz ab:
@@ -391,7 +439,8 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
               type="date"
               name="start-date"
               id="start-date"
-              defaultValue={today}
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
               fullWidth
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -423,7 +472,8 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
               type="date"
               name="end-date"
               id="end-date"
-              defaultValue={oneYearLaterStr}
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
               fullWidth
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -449,7 +499,6 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
           </Box>
         </Box>
 
-        {/* Versicherungswert */}
         <Box>
           <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
             Wert (EUR):
@@ -458,7 +507,8 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
             type="number"
             name="insurance-value"
             id="insurance-value"
-            defaultValue="1000"
+            value={insuranceValue}
+            onChange={(e) => setInsuranceValue(e.target.value)}
             inputProps={{ min: 0, step: 100 }}
             fullWidth
             sx={{
@@ -487,387 +537,183 @@ export function RiskInputModal({ open, onClose, initialRiskDescription, onRiskCr
     </form>
   );
 
-  // Render step 2: Loading with optimized UX
-  const renderLoading = () => {
-    return (
-      <Box sx={{ py: 4 }}>
-        {/* Header with Icon */}
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center", justifyContent: "center", mb: 4 }}>
-          <Box
-            sx={{
-              position: "relative",
-              width: 80,
-              height: 80,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {/* Animated Ring */}
-            <Box
+  const renderLoading = (title: string, subtitle: string) => (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 1 }}>
+        <Avatar sx={{ bgcolor: "#ff671f", width: 56, height: 56, mx: "auto" }}>
+          <Sparkles />
+        </Avatar>
+        <Typography className="heading-3 text-primary">{title}</Typography>
+        <Typography className="body-base text-secondary">{subtitle}</Typography>
+      </Box>
+
+      <Box>
+        <LinearProgress variant="determinate" value={loadingProgress} sx={{ height: 10, borderRadius: 1 }} />
+        {progressLabel && (
+          <Typography className="body-sm text-secondary" sx={{ mt: 1, textAlign: "center" }}>
+            {progressLabel}
+          </Typography>
+        )}
+      </Box>
+
+      <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap">
+        {loadingPhases.map((phase, index) => (
+          <Chip
+            key={phase.title}
+            icon={<CheckCircle2 size={16} />}
+            label={phase.title}
+            color={completedPhases[index] ? "success" : "default"}
+            variant={completedPhases[index] ? "filled" : index === currentPhaseIndex ? "outlined" : "outlined"}
+          />
+        ))}
+      </Stack>
+    </Box>
+  );
+
+  const renderInquiryForm = () => (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+        <Avatar sx={{ bgcolor: "#ff671f", width: 40, height: 40, fontWeight: 600 }}>2</Avatar>
+        <Box sx={{ flex: 1 }}>
+          <Typography className="heading-3 text-primary" sx={{ mb: 0.5 }}>
+            Rückfragen beantworten
+          </Typography>
+          <Typography className="body-sm text-secondary">Bitte fülle alle Fragen aus, damit wir fortfahren können.</Typography>
+        </Box>
+      </Box>
+
+      <Stack spacing={2}>
+        {inquiries.map((inquiry, index) => (
+          <Box key={index}>
+            <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
+              {inquiry.question}
+            </Typography>
+            <TextField
+              fullWidth
+              value={answers[index] ?? ""}
+              onChange={(e) => handleInquiryChange(index, e.target.value)}
+              placeholder="Antwort eingeben"
               sx={{
-                position: "absolute",
-                width: "100%",
-                height: "100%",
-                borderRadius: "50%",
-                border: "3px solid #f3f2f2",
-                borderTopColor: "#ff671f",
-                animation: "spin 1s linear infinite",
-                "@keyframes spin": {
-                  "0%": { transform: "rotate(0deg)" },
-                  "100%": { transform: "rotate(360deg)" },
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: "#f3f2f2",
+                  borderRadius: 1,
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: { xs: "16px", md: "16px" },
+                  color: "#353131",
+                  minHeight: { xs: 56, md: "auto" },
+                  "& fieldset": {
+                    borderColor: "#e6e5e5",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#ff671f",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#ff671f",
+                    borderWidth: "2px",
+                  },
                 },
               }}
             />
-            {/* Icon */}
-            <Avatar
-              sx={{
-                bgcolor: "#ff671f",
-                width: 64,
-                height: 64,
-                boxShadow: "0 4px 16px rgba(255, 103, 31, 0.25)",
-              }}
-            >
-              <Sparkles size={32} color="#ffffff" />
-            </Avatar>
           </Box>
-        </Box>
-
-        {/* Progress Information */}
-        <Box sx={{ mb: 4, textAlign: "center" }}>
-          <Typography className="heading-3 text-primary" sx={{ mb: 1 }}>
-            Einen Moment...
-          </Typography>
-          <Typography className="body-sm text-secondary">
-            {Math.round(progress)}% erledigt
-          </Typography>
-        </Box>
-
-        {/* Progress Bar */}
-        <Box sx={{ mb: 6, px: 2 }}>
-          <LinearProgress
-            variant="determinate"
-            value={progress}
-            sx={{
-              height: 8,
-              borderRadius: 1,
-              bgcolor: "#f3f2f2",
-              "& .MuiLinearProgress-bar": {
-                bgcolor: "#ff671f",
-                borderRadius: 1,
-                transition: "transform 0.2s ease-out",
-              },
-            }}
-          />
-        </Box>
-
-        {/* Phases List */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, px: 2 }}>
-          {loadingPhases.map((phase, index) => {
-            const isCompleted = completedPhases.includes(index);
-            const isCurrent = index === currentPhaseIndex;
-            const isPending = index > currentPhaseIndex;
-
-            return (
-              <Fade in={true} key={phase.id} timeout={300} style={{ transitionDelay: `${index * 100}ms` }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: isCurrent ? "rgba(255, 103, 31, 0.08)" : "transparent",
-                    border: isCurrent ? "1px solid rgba(255, 103, 31, 0.2)" : "1px solid transparent",
-                    transition: "all 0.3s ease",
-                    transform: isCurrent ? "scale(1.02)" : "scale(1)",
-                  }}
-                >
-                  {/* Icon/Status */}
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: isCompleted ? "#00a63e" : isCurrent ? "#ff671f" : "#f3f2f2",
-                      color: isCompleted || isCurrent ? "#ffffff" : "#4f4a4a",
-                      transition: "all 0.3s ease",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {isCompleted ? (
-                      <Grow in={true}>
-                        <Box sx={{ display: "flex" }}>
-                          <CheckCircle2 size={24} />
-                        </Box>
-                      </Grow>
-                    ) : (
-                      phase.icon
-                    )}
-                  </Box>
-
-                  {/* Text Content */}
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      className="body-base-medium"
-                      sx={{
-                        color: isCurrent ? "#ff671f" : isCompleted ? "#00a63e" : "#353131",
-                        transition: "color 0.3s ease",
-                      }}
-                    >
-                      {phase.title}
-                    </Typography>
-                    <Typography
-                      className="body-sm"
-                      sx={{
-                        color: isPending ? "#9ca3af" : "#4f4a4a",
-                        opacity: isPending ? 0.6 : 1,
-                        transition: "all 0.3s ease",
-                      }}
-                    >
-                      {phase.description}
-                    </Typography>
-                  </Box>
-
-                  {/* Loading Spinner for Current Phase */}
-                  {isCurrent && (
-                    <Box
-                      sx={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: "50%",
-                        border: "2px solid #f3f2f2",
-                        borderTopColor: "#ff671f",
-                        animation: "spin 0.8s linear infinite",
-                        flexShrink: 0,
-                      }}
-                    />
-                  )}
-                </Box>
-              </Fade>
-            );
-          })}
-        </Box>
-
-        {/* Bottom Info */}
-        <Box sx={{ mt: 4, textAlign: "center" }}>
-          <Typography className="body-sm text-secondary" sx={{ fontStyle: "italic" }}>
-            Wir schauen, welche Details wir noch brauchen
-          </Typography>
-        </Box>
-      </Box>
-    );
-  };
-
-  // Render step 3: Questions
-  const renderQuestions = () => (
-    <form onSubmit={handleQuestionSubmit}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        {/* Header with Step Number */}
-        <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
-          <Avatar
-            sx={{
-              bgcolor: "#ff671f",
-              width: 40,
-              height: 40,
-              fontFamily: "'Inter', sans-serif",
-              fontWeight: 500,
-              fontSize: "16px",
-            }}
-          >
-            2
-          </Avatar>
-          <Box sx={{ flex: 1 }}>
-            <Typography className="heading-3 text-primary" sx={{ mb: 0.5 }}>
-              Noch ein paar Details
-            </Typography>
-            <Typography className="body-sm text-secondary">
-              Damit wir Dein Anliegen richtig einschätzen können
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Question 1 */}
-        <Box>
-          <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
-            Welche Marke, welches Modell und welches Baujahr?
-          </Typography>
-          <TextField
-            name="model-info"
-            placeholder="z.B. DeLonghi Magnifica S, Baujahr 2020"
-            fullWidth
-            multiline
-            rows={3}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                bgcolor: "#f3f2f2",
-                borderRadius: 1,
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "16px",
-                color: "#353131",
-                "& fieldset": {
-                  borderColor: "#e6e5e5",
-                },
-                "&:hover fieldset": {
-                  borderColor: "#ff671f",
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: "#ff671f",
-                  borderWidth: "2px",
-                },
-              },
-              "& .MuiOutlinedInput-input": {
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "16px",
-                "&::placeholder": {
-                  color: "#4f4a4a",
-                  opacity: 1,
-                },
-              },
-            }}
-          />
-        </Box>
-
-        {/* Question 2 */}
-        <Box>
-          <Typography className="body-base-medium text-primary" sx={{ mb: 1 }}>
-            Wo wird {detectedItem === "Gerät" ? "es" : "die " + detectedItem} genutzt und wie ist {detectedItem === "Gerät" ? "es" : "sie"} gesichert?
-          </Typography>
-          <TextField
-            name="storage-security"
-            placeholder="z.B. Privat in der Küche, Originalverpackung vorhanden, Transport im Auto"
-            fullWidth
-            multiline
-            rows={4}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                bgcolor: "#f3f2f2",
-                borderRadius: 1,
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "16px",
-                color: "#353131",
-                "& fieldset": {
-                  borderColor: "#e6e5e5",
-                },
-                "&:hover fieldset": {
-                  borderColor: "#ff671f",
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: "#ff671f",
-                  borderWidth: "2px",
-                },
-              },
-              "& .MuiOutlinedInput-input": {
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "16px",
-                "&::placeholder": {
-                  color: "#4f4a4a",
-                  opacity: 1,
-                },
-              },
-            }}
-          />
-        </Box>
-      </Box>
-    </form>
+        ))}
+      </Stack>
+    </Box>
   );
 
-  const getTitle = () => {
-    if (step === "input") return "Du suchst Schutz";
-    if (step === "loading") return "Einen Moment...";
-    if (step === "auth") return "Fast geschafft";
-    return "Noch ein paar Details";
+  const renderAuthRequired = () => (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Typography className="heading-3 text-primary" sx={{ textAlign: "center" }}>
+        Anmeldung erforderlich
+      </Typography>
+      <Typography className="body-base text-secondary" sx={{ textAlign: "center" }}>
+        Bitte melde dich an, um die Antworten zu senden und den Workflow fortzusetzen.
+      </Typography>
+      <Divider sx={{ my: 1 }} />
+      <AuthModal
+        onLogin={async () => {
+          await handleAuthSuccess();
+        }}
+        onRegister={async () => {
+          await handleAuthSuccess();
+        }}
+      />
+    </Box>
+  );
+
+  const renderContent = () => {
+    if (step === "loading") {
+      return renderLoading("Analyse gestartet", "Wir verbinden uns mit xrisk.info und empfangen Live-Updates...");
+    }
+
+    if (step === "questions") {
+      return renderInquiryForm();
+    }
+
+    if (step === "auth") {
+      return renderAuthRequired();
+    }
+
+    return renderInputForm();
   };
 
-  const getSubtitle = () => {
-    if (step === "input") return "Schritt 1 von 3";
-    if (step === "loading") return "Wir prüfen Deine Angaben";
-    if (step === "auth") return "Schritt 3 von 3";
-    return "Schritt 2 von 3";
-  };
+  const renderActions = () => {
+    if (step === "auth") {
+      return null;
+    }
 
-  const getIcon = () => {
-    if (step === "loading") return <Sparkles size={24} color="#e6e5e5" />;
-    return <FileText size={24} color="#e6e5e5" />;
-  };
+    if (step === "questions") {
+      return (
+        <>
+          <Button onClick={handleClose} variant="outlined">
+            Abbrechen
+          </Button>
+          <Button onClick={handleInquirySubmit} variant="contained">
+            Weiter
+          </Button>
+        </>
+      );
+    }
 
-  const actions = step !== "loading" && step !== "auth" ? (
-    <>
-      <Button
-        onClick={handleClose}
-        variant="outlined"
-        sx={{
-          textTransform: "none",
-          fontFamily: "'Roboto', sans-serif",
-          borderColor: "#e6e5e5",
-          color: "#353131",
-          "&:hover": {
-            borderColor: "#353131",
-            bgcolor: "transparent",
-          },
-        }}
-      >
-        Abbrechen
-      </Button>
-      <Button
-        type="submit"
-        variant="contained"
-        onClick={(e) => {
-          if (step === "input") {
-            const form = document.querySelector('form');
-            if (form) {
-              form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-            }
-          } else if (step === "questions") {
-            const form = document.querySelector('form');
-            if (form) {
-              form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-            }
-          }
-        }}
-        sx={{
-          bgcolor: "#ff671f",
-          color: "#e6e5e5",
-          textTransform: "none",
-          fontFamily: "'Roboto', sans-serif",
-          display: "flex",
-          gap: 1,
-          alignItems: "center",
-          "&:hover": {
-            bgcolor: "#ff671f",
-            opacity: 0.9,
-          },
-        }}
-      >
-        {step === "input" ? (
-          <>
-            <Wand2 size={20} />
-            Jetzt absichern
-          </>
-        ) : (
-          "Anliegen erstellen"
-        )}
-      </Button>
-    </>
-  ) : undefined;
+    if (step === "loading") {
+      return (
+        <Button onClick={handleClose} variant="outlined">
+          Abbrechen
+        </Button>
+      );
+    }
+
+    return (
+      <>
+        <Button onClick={handleClose} variant="outlined">
+          Abbrechen
+        </Button>
+        <Button type="submit" form="risk-input-form" variant="contained">
+          Analyse starten
+        </Button>
+      </>
+    );
+  };
 
   return (
     <BaseModal
       open={open}
       onClose={handleClose}
-      title={getTitle()}
-      subtitle={getSubtitle()}
-      icon={getIcon()}
-      actions={actions}
+      title="Risiko erfassen"
+      subtitle="Wir starten für Dich den xrisk.info Workflow"
+      icon={<Wand2 size={24} />}
+      actions={renderActions()}
+      showCloseButton
       maxWidth="md"
     >
-      {step === "input" && renderInputForm()}
-      {step === "loading" && renderLoading()}
-      {step === "questions" && renderQuestions()}
-      {step === "auth" && <AuthModal onLogin={handleAuthLogin} onRegister={handleAuthRegister} />}
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        {renderContent()}
+
+        {error && (
+          <Typography className="body-sm text-error" sx={{ textAlign: "center" }}>
+            {error}
+          </Typography>
+        )}
+      </Box>
     </BaseModal>
   );
 }

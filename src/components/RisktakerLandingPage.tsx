@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../auth/AuthContext";
 import { LandingNavbar } from "./landing/LandingNavbar";
 import { HeroSection } from "./landing/HeroSection";
 import { MarketplacePreviewSection } from "./landing/MarketplacePreviewSection";
@@ -13,17 +14,12 @@ import imgHeroImage1 from "figma:asset/6801e0080f468c28a449cecf6698c2995a9ed561.
 import imgHeroImage2 from "figma:asset/013e60f9dba635c7628c40e9ea4fc3f373c327f7.png";
 
 interface RisktakerLandingPageProps {
-  onLogin: () => void;
-  isLoggedIn?: boolean;
   onUserTypeChange: (type: "risikogeber" | "risikonehmer") => void;
 }
 
-export function RisktakerLandingPage({
-  onLogin,
-  isLoggedIn = false,
-  onUserTypeChange,
-}: RisktakerLandingPageProps) {
+export function RisktakerLandingPage({ onUserTypeChange }: RisktakerLandingPageProps) {
   const [activeSection, setActiveSection] = useState("hero");
+  const { isLoggedIn, login } = useAuth();
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -39,7 +35,7 @@ export function RisktakerLandingPage({
     if (isLoggedIn) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      onLogin();
+      login();
     }
   };
 
@@ -103,7 +99,9 @@ export function RisktakerLandingPage({
         activeSection={activeSection}
         scrollToSection={scrollToSection}
         isLoggedIn={isLoggedIn}
-        onLogin={onLogin}
+        onLogin={() => {
+          void login();
+        }}
         userType="risikonehmer"
         onUserTypeChange={onUserTypeChange}
       />
