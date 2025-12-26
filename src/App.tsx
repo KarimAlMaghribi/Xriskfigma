@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Dashboard } from "./components/Dashboard";
 import { Marketplace } from "./components/Marketplace";
 import { DesignSystem } from "./components/DesignSystem";
@@ -174,6 +174,7 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [userType, setUserType] = useState<"risikogeber" | "risikonehmer">("risikogeber");
   const [newRisks, setNewRisks] = useState<Risk[]>([]);
+  const lastToastStatusRef = useRef<Record<string, Risk["status"]>>({});
   const [riskModalOpen, setRiskModalOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [takeRiskModalOpen, setTakeRiskModalOpen] = useState(false);
@@ -203,14 +204,39 @@ export default function App() {
   };
 
   const handleRiskCreated = (risk: Risk) => {
-    setNewRisks((prev) => [risk, ...prev]);
-    setCurrentPage("home");
-    setRiskModalOpen(false);
+    setNewRisks((prev) => {
+      const existingIndex = prev.findIndex((r) => r.id === risk.id);
+      if (existingIndex !== -1) {
+        const updatedRisk = { ...prev[existingIndex], ...risk };
+        const updatedList = [...prev];
+        updatedList[existingIndex] = updatedRisk;
+        return updatedList;
+      }
 
-    toast.success(`Risiko "${risk.title}" wurde angelegt`, {
-      description: "Die Riskoanalyse läuft gerade noch im Hintergrund.",
-      duration: 5000,
+      return [risk, ...prev];
     });
+
+    setCurrentPage("home");
+
+    const previousStatus = lastToastStatusRef.current[risk.id];
+    if (previousStatus === risk.status) {
+      return;
+    }
+
+    lastToastStatusRef.current[risk.id] = risk.status;
+
+    if (risk.status === "completed") {
+      setRiskModalOpen(false);
+      toast.success(`Risiko "${risk.title}" abgeschlossen`, {
+        description: "Die Analyse wurde erfolgreich abgeschlossen.",
+        duration: 5000,
+      });
+    } else {
+      toast.info(`Risiko "${risk.title}" wurde angelegt`, {
+        description: "Die Risikaanalyse läuft gerade noch im Hintergrund.",
+        duration: 4000,
+      });
+    }
   };
 
   const handleDeleteRisk = (riskId: string) => {

@@ -74,5 +74,12 @@
     server: {
       port: 3000,
       open: true,
+      proxy: {
+        '/workflow': {
+          target: 'https://xrisk.info',
+          changeOrigin: true,
+          secure: true,
+        },
+      },
     },
   });
